@@ -8,7 +8,9 @@
       "rules": {
         "no-shadow": "off",
         "no-undef": "off",
-        "no-extra-boolean-cast": "off"
+        "no-extra-boolean-cast": "off",
+        "comma-dangle": "off",
+        "@typescript-eslint/no-non-null-assertion": "off",
       }
     }
   ],
