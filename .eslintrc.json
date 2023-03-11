@@ -1,19 +1,4 @@
 {
-  "overrides": [
-    {
-      "files": [
-        "*.ts",
-        "*.tsx"
-      ],
-      "rules": {
-        "no-shadow": "off",
-        "no-undef": "off",
-        "no-extra-boolean-cast": "off",
-        "comma-dangle": "off",
-        "@typescript-eslint/no-non-null-assertion": "off",
-      }
-    }
-  ],
   "env": {
     "browser": true,
     "es2021": true
@@ -23,6 +8,25 @@
     "eslint:recommended",
     "plugin:react/recommended",
     "plugin:@typescript-eslint/recommended"
+  ],
+  "globals": {
+    "process": "readonly",
+    "require": "readonly"
+  },
+  "overrides": [
+    {
+      "files": [
+        "*.ts",
+        "*.tsx"
+      ],
+      "rules": {
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "comma-dangle": "off",
+        "no-extra-boolean-cast": "off",
+        "no-shadow": "off",
+        "no-undef": "off"
+      }
+    }
   ],
   "parserOptions": {
     "ecmaFeatures": {
@@ -35,22 +39,18 @@
     "react",
     "@typescript-eslint"
   ],
-  "globals": {
-    "require": "readonly",
-    "process": "readonly"
-  },
   "rules": {
     "linebreak-style": [
       "error",
       "windows"
     ],
-    "react/display-name": "off",
     "prettier/prettier": [
       "error",
       {
         "endOfLine": "auto"
       }
     ],
+    "react/display-name": "off",
     "suppressImplicitAnyIndexErrors": "off"
   }
 }
