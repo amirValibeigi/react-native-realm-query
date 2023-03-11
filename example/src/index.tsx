@@ -1,8 +1,12 @@
 import React from 'react';
 import {FlatList, Text, TouchableOpacity, View} from 'react-native';
+import {setRealm} from 'react-native-realm-query';
+import Database from './database/Database';
 import {useCategory} from './hooks';
 import RenderItem from './RenderItem';
 import {styles} from './styles';
+
+setRealm(Database);
 
 function App() {
   const {categories, ...props} = useCategory();

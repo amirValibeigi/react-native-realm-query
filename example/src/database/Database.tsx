@@ -1,10 +1,11 @@
 import Realm from 'realm';
+import {BrandSchema} from './tables/BrandTable';
 import {CategorySchema} from './tables/CategoryTable';
 
 ////////////////Options
 export const DatabaseOptions: Realm.Configuration = {
   path: 'database.realm',
-  schema: [CategorySchema],
+  schema: [CategorySchema, BrandSchema],
   schemaVersion: 1,
 };
 ////////////////Options

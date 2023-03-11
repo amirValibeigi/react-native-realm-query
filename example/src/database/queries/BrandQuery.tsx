@@ -1,6 +1,6 @@
 import Database, {getDatabase} from '../Database';
-import CategoryModel from '../../models/CategoryModel';
-import {CATEGORY_SCHEMA} from '../tables/CategoryTable';
+import BrandModel from '../../models/BrandModel';
+import {BRAND_SCHEMA} from '../tables/BrandTable';
 import QueryBuilder from 'react-native-realm-query';
 
 export type Filter = Partial<{
@@ -14,26 +14,24 @@ export type Filter = Partial<{
   titleStart: string;
 }>;
 
-export const insertOrUpdateCategoryQuery = (
-  categories?: CategoryModel | CategoryModel[],
-) =>
+export const insertOrUpdateBrandQuery = (brands?: BrandModel | BrandModel[]) =>
   new Promise<boolean>((resole, reject) => {
-    if (!categories) {
+    if (!brands) {
       resole(true);
       return;
     }
 
-    if (!(categories instanceof Array)) {
-      categories = [categories];
+    if (!(brands instanceof Array)) {
+      brands = [brands];
     }
 
     try {
       getDatabase().then(realm => {
         realm.write(() => {
-          (categories as CategoryModel[]).forEach(_category => {
-            Database.create<CategoryModel>(
-              CATEGORY_SCHEMA,
-              _category,
+          (brands as BrandModel[]).forEach(_brand => {
+            Database.create<BrandModel>(
+              BRAND_SCHEMA,
+              _brand,
               Realm.UpdateMode.Modified,
             );
           });
@@ -45,12 +43,12 @@ export const insertOrUpdateCategoryQuery = (
     }
   });
 
-export const getCategoriesQuery = (filter?: Filter) =>
-  new Promise<CategoryModel[]>((resole, reject) => {
+export const getBrandsQuery = (filter?: Filter) =>
+  new Promise<BrandModel[]>((resole, reject) => {
     try {
-      let allCategory = new QueryBuilder<CategoryModel>(CATEGORY_SCHEMA);
+      let allBrand = new QueryBuilder<BrandModel>(BRAND_SCHEMA);
 
-      allCategory
+      allBrand
         .when(filter?.id, (pQ, id) => {
           //get param from when
           pQ.where('id', '=', id);
@@ -100,24 +98,24 @@ export const getCategoriesQuery = (filter?: Filter) =>
           pQ.sort('title', 'ASC').sort('id', 'DESC').limit(6, 3);
         });
 
-      console.log('query:', allCategory.getQuery());
+      console.log('query:', allBrand.getQuery());
 
       if (filter?.findId) {
         resole([]);
       }
 
-      resole(allCategory.get().map(pCategory => new CategoryModel(pCategory)));
+      resole(allBrand.get().map(pBrand => new BrandModel(pBrand)));
     } catch (err) {
       reject(err);
     }
   });
 
-export const clearCategoriesQuery = () =>
+export const clearBrandsQuery = () =>
   new Promise<boolean>((resole, reject) => {
     try {
       getDatabase().then(realm => {
         realm.write(() => {
-          Database.delete(Database.objects(CATEGORY_SCHEMA));
+          Database.delete(Database.objects(BRAND_SCHEMA));
         });
         resole(true);
       });

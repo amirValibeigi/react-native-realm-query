@@ -1,7 +1,13 @@
 import type Realm from 'realm';
+import { getRealm } from './Config';
 
-type WhereValueType = string | number | (string | number)[] | null | undefined;
-type WhereOperatorType =
+export type WhereValueType =
+  | string
+  | number
+  | (string | number)[]
+  | null
+  | undefined;
+export type WhereOperatorType =
   | '!'
   | '!='
   | '<'
@@ -22,18 +28,18 @@ type WhereOperatorType =
   | 'LIKE'
   | 'LIKE[c]';
 
-type WhereType = {
+export type WhereType = {
   property: string;
   operator?: WhereOperatorType;
   value: WhereValueType;
 };
 
-type SortType<T> = {
+export type SortType<T> = {
   property: keyof T | string;
   sort: 'ASC' | 'DESC';
 };
 
-type QueryType = {
+export type QueryType = {
   type:
     | 'and'
     | 'distinct'
@@ -61,8 +67,8 @@ export default class QueryBuilder<T> {
   private vOffset: number = -1;
   private vLimit: number = -1;
 
-  constructor(realm: Realm, schema: string) {
-    this.realm = realm;
+  constructor(schema: string, realm?: Realm) {
+    this.realm = realm ?? getRealm();
     this.schema = schema;
   }
 

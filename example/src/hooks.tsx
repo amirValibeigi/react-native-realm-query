@@ -1,10 +1,15 @@
 import React from 'react';
 import {
+  clearBrandsQuery,
+  insertOrUpdateBrandQuery,
+} from './database/queries/BrandQuery';
+import {
   clearCategoriesQuery,
   Filter,
   getCategoriesQuery,
   insertOrUpdateCategoryQuery,
 } from './database/queries/CategoryQuery';
+import BrandModel from './models/BrandModel';
 import CategoryModel from './models/CategoryModel';
 
 let categoryId = 1;
@@ -29,7 +34,13 @@ export function useCategory() {
 
   const onPressResetCategory = React.useCallback(() => {
     clearCategoriesQuery().then(() => {
-      insertOrUpdateCategoryQuery(initCategories).finally(getCategories);
+      insertOrUpdateCategoryQuery(initCategories);
+
+      clearBrandsQuery().then(() => {
+        insertOrUpdateBrandQuery(initBrands).finally(() => {
+          getCategories();
+        });
+      });
     });
   }, [getCategories]);
 
@@ -104,5 +115,33 @@ const initCategories = [
   new CategoryModel({
     id: 4,
     title: 'mac',
+  }),
+];
+
+const initBrands = [
+  new BrandModel({
+    id: 1,
+    category_id: 1,
+    title: 'microsoft',
+  }),
+  new BrandModel({
+    id: 2,
+    category_id: 2,
+    title: 'samsung',
+  }),
+  new BrandModel({
+    id: 3,
+    category_id: 2,
+    title: 'sony',
+  }),
+  new BrandModel({
+    id: 4,
+    category_id: 3,
+    title: 'apple',
+  }),
+  new BrandModel({
+    id: 5,
+    category_id: 4,
+    title: 'apple',
   }),
 ];
