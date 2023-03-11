@@ -1,4 +1,5 @@
 {
+  "root": true,
   "env": {
     "browser": true,
     "es2021": true
@@ -13,6 +14,11 @@
     "process": "readonly",
     "require": "readonly"
   },
+  "ignorePatterns": [
+    "scripts/bootstrap.js",
+    "example/metro.config.js",
+    "example/babel.config.js"
+  ],
   "overrides": [
     {
       "files": [
@@ -21,6 +27,8 @@
       ],
       "rules": {
         "@typescript-eslint/no-non-null-assertion": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-var-requires": "off",
         "comma-dangle": "off",
         "no-extra-boolean-cast": "off",
         "no-shadow": "off",

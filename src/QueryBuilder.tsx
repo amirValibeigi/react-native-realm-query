@@ -64,8 +64,8 @@ export default class QueryBuilder<T> {
   private realm: Realm;
   private queryList: QueryType[] = [];
   private sortList: SortType<T>[] = [];
-  private vOffset: number = -1;
-  private vLimit: number = -1;
+  private vOffset = -1;
+  private vLimit = -1;
 
   constructor(schema: string, realm?: Realm) {
     this.realm = realm ?? getRealm();
@@ -330,20 +330,22 @@ export default class QueryBuilder<T> {
         switch (currentQuery!.type) {
           case 'where':
           case 'orWhere':
-            const vWhere = currentQuery!.value as WhereType;
-            if (vWhere.value instanceof Array) {
-              vQuery = vWhere.value
-                .map(
-                  (pValue) =>
-                    `${vWhere?.property} ${this.safeOperator(
-                      vWhere.operator
-                    )} ${this.safeValue(pValue)}`
-                )
-                .join(' OR ');
-            } else {
-              vQuery = `${vWhere?.property} ${this.safeOperator(
-                vWhere.operator
-              )} ${this.safeValue(vWhere.value)}`;
+            if (currentQuery?.value) {
+              const vWhere = currentQuery!.value as WhereType;
+              if (vWhere.value instanceof Array) {
+                vQuery = vWhere.value
+                  .map(
+                    (pValue) =>
+                      `${vWhere?.property} ${this.safeOperator(
+                        vWhere.operator
+                      )} ${this.safeValue(pValue)}`
+                  )
+                  .join(' OR ');
+              } else {
+                vQuery = `${vWhere?.property} ${this.safeOperator(
+                  vWhere.operator
+                )} ${this.safeValue(vWhere.value)}`;
+              }
             }
             break;
 
@@ -354,12 +356,14 @@ export default class QueryBuilder<T> {
 
           case 'whereBetween':
           case 'orWhereBetween':
-            const vWhereBetween = currentQuery!.value as WhereType;
-            const vValueBetween = vWhereBetween.value as Array<number>;
+            if (currentQuery?.value) {
+              const vWhereBetween = currentQuery!.value as WhereType;
+              const vValueBetween = vWhereBetween.value as Array<number>;
 
-            vQuery = `${vWhereBetween?.property} BETWEEN { ${this.safeValue(
-              vValueBetween[0]
-            )},${this.safeValue(vValueBetween[1])} }`;
+              vQuery = `${vWhereBetween?.property} BETWEEN { ${this.safeValue(
+                vValueBetween[0]
+              )},${this.safeValue(vValueBetween[1])} }`;
+            }
             break;
 
           case 'groupEnd':
@@ -379,7 +383,7 @@ export default class QueryBuilder<T> {
             break;
         }
 
-        if (lastQuery && lastQuery.type != 'groupStart') {
+        if (lastQuery && lastQuery.type !== 'groupStart') {
           switch (currentQuery!.type) {
             case 'where':
             case 'whereRaw':

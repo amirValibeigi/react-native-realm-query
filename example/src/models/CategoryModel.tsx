@@ -1,4 +1,4 @@
-import QueryBuilder, {ModelRelationship} from 'react-native-realm-query';
+import {ModelRelationship} from 'react-native-realm-query';
 import {BRAND_SCHEMA} from '../database/tables/BrandTable';
 import {CATEGORY_SCHEMA} from '../database/tables/CategoryTable';
 

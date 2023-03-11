@@ -48,7 +48,7 @@ export const insertOrUpdateCategoryQuery = (
 export const getCategoriesQuery = (filter?: Filter) =>
   new Promise<CategoryModel[]>((resole, reject) => {
     try {
-      let allCategory = new QueryBuilder<CategoryModel>(CATEGORY_SCHEMA);
+      const allCategory = new QueryBuilder<CategoryModel>(CATEGORY_SCHEMA);
 
       allCategory
         .when(filter?.id, (pQ, id) => {

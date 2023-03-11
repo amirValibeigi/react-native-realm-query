@@ -12,10 +12,9 @@ import {
 import BrandModel from './models/BrandModel';
 import CategoryModel from './models/CategoryModel';
 
-let categoryId = 1;
-
 export function useCategory() {
   const [categories, setCategories] = React.useState<CategoryModel[]>();
+  const [categoryId, setCategoryId] = React.useState<number>(1);
 
   const getCategories = React.useCallback((filter?: Filter) => {
     getCategoriesQuery(filter).then(pCategories => {
@@ -23,10 +22,11 @@ export function useCategory() {
         setCategories(pCategories);
 
         if (pCategories.length > 0) {
-          categoryId =
+          setCategoryId(
             (pCategories
               .map(pC => pC.id ?? 0)
-              .sort((a: number, b: number) => b - a)[0] ?? 0) + 1;
+              .sort((a: number, b: number) => b - a)[0] ?? 0) + 1,
+          );
         }
       }
     });
@@ -48,10 +48,10 @@ export function useCategory() {
     insertOrUpdateCategoryQuery(
       new CategoryModel({
         id: categoryId,
-        title: `category`,
+        title: 'category',
       }),
     ).then(() => {
-      categoryId++;
+      setCategoryId(pCI => pCI + 1);
 
       getCategories();
     });
@@ -89,7 +89,7 @@ export function useCategory() {
     [getCategories],
   );
 
-  React.useEffect(getCategories, []);
+  React.useEffect(getCategories, [getCategories]);
 
   return {
     ...onPressFilters,

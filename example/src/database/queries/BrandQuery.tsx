@@ -46,7 +46,7 @@ export const insertOrUpdateBrandQuery = (brands?: BrandModel | BrandModel[]) =>
 export const getBrandsQuery = (filter?: Filter) =>
   new Promise<BrandModel[]>((resole, reject) => {
     try {
-      let allBrand = new QueryBuilder<BrandModel>(BRAND_SCHEMA);
+      const allBrand = new QueryBuilder<BrandModel>(BRAND_SCHEMA);
 
       allBrand
         .when(filter?.id, (pQ, id) => {
