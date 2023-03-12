@@ -24,6 +24,7 @@ function App() {
 }
 
 const Header = ({
+  getSimpleCategories,
   onPressAddCategory,
   onPressResetCategory,
   onPressResetFilter,
@@ -42,6 +43,7 @@ const Header = ({
     <View style={styles.header}>
       <Btn onPress={onPressResetCategory}>reset & init category</Btn>
       <Btn onPress={onPressAddCategory}>add category</Btn>
+      <Btn onPress={getSimpleCategories}>get category with query</Btn>
       <GroupView title="filter category">
         <Btn onPress={onPressResetFilter}>reset</Btn>
         <Btn onPress={onPressFilterId}>id</Btn>

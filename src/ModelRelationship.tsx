@@ -59,16 +59,6 @@ export default class ModelRelationship<T> {
     ownerProperty: keyof T | string = 'id',
     childProperty?: keyof P | string
   ) {
-    console.log(
-      new QueryBuilder<P>(schema)
-        .where(
-          (childProperty ?? schemaToId(this.getTableName())) as keyof P,
-          '=',
-          (this as any)[ownerProperty] ?? -1
-        )
-        .get()
-    );
-
     return new QueryBuilder<P>(schema)
       .where(
         (childProperty ?? schemaToId(this.getTableName())) as keyof P,

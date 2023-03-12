@@ -1,6 +1,7 @@
 import {ModelRelationship} from 'react-native-realm-query';
 import {BRAND_SCHEMA} from '../database/tables/BrandTable';
 import {CATEGORY_SCHEMA} from '../database/tables/CategoryTable';
+import BrandModel from './BrandModel';
 
 export interface CategoryModelType {
   id?: number;
@@ -22,7 +23,7 @@ export default class CategoryModel
   }
 
   brands() {
-    return this.hasMany(BRAND_SCHEMA);
+    return this.hasMany(BRAND_SCHEMA).map(pB => new BrandModel(pB as object));
   }
 }
 

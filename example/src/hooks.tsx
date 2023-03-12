@@ -11,12 +11,14 @@ import {
 } from './database/queries/CategoryQuery';
 import BrandModel from './models/BrandModel';
 import CategoryModel from './models/CategoryModel';
+import type CategorySimpleModel from './models/CategorySimpleModel';
 
 export function useCategory() {
-  const [categories, setCategories] = React.useState<CategoryModel[]>();
+  const [categories, setCategories] =
+    React.useState<(CategoryModel | CategorySimpleModel)[]>();
   const [categoryId, setCategoryId] = React.useState<number>(1);
 
-  const getCategories = React.useCallback((filter?: Filter) => {
+  const getSimpleCategories = React.useCallback((filter?: Filter) => {
     getCategoriesQuery(filter).then(pCategories => {
       if (pCategories) {
         setCategories(pCategories);
@@ -38,11 +40,11 @@ export function useCategory() {
 
       clearBrandsQuery().then(() => {
         insertOrUpdateBrandQuery(initBrands).finally(() => {
-          getCategories();
+          getSimpleCategories();
         });
       });
     });
-  }, [getCategories]);
+  }, [getSimpleCategories]);
 
   const onPressAddCategory = React.useCallback(() => {
     insertOrUpdateCategoryQuery(
@@ -53,49 +55,50 @@ export function useCategory() {
     ).then(() => {
       setCategoryId(pCI => pCI + 1);
 
-      getCategories();
+      getSimpleCategories();
     });
-  }, [categoryId, getCategories]);
+  }, [categoryId, getSimpleCategories]);
 
   const onPressFilters = React.useMemo(
     () => ({
-      onPressResetFilter: getCategories,
-      onPressFilterId: getCategories.bind(null, {id: 2}),
-      onPressFilterIdTwo: getCategories.bind(null, {id: [1, 3]}),
-      onPressFilterLikeTitle: getCategories.bind(null, {title: 'android'}),
-      onPressFilterIdOrTitle: getCategories.bind(null, {
+      onPressResetFilter: getSimpleCategories,
+      onPressFilterId: getSimpleCategories.bind(null, {id: 2}),
+      onPressFilterIdTwo: getSimpleCategories.bind(null, {id: [1, 3]}),
+      onPressFilterLikeTitle: getSimpleCategories.bind(null, {
+        title: 'android',
+      }),
+      onPressFilterIdOrTitle: getSimpleCategories.bind(null, {
         id: [1],
         title: 'android',
       }),
-      onPressFilterFindId: getCategories.bind(null, {
+      onPressFilterFindId: getSimpleCategories.bind(null, {
         findId: 4,
       }),
-      onPressFilterRaw: getCategories.bind(null, {
+      onPressFilterRaw: getSimpleCategories.bind(null, {
         raw: "title contains 'i' and (id = 1 or id = 3)",
       }),
-      onPressFilterBetweenId: getCategories.bind(null, {
+      onPressFilterBetweenId: getSimpleCategories.bind(null, {
         betweenId: [2, 5],
       }),
-      onPressFilterTitleStart: getCategories.bind(null, {
+      onPressFilterTitleStart: getSimpleCategories.bind(null, {
         titleStart: 'win',
       }),
-      onPressFilterTitleEnd: getCategories.bind(null, {
+      onPressFilterTitleEnd: getSimpleCategories.bind(null, {
         titleEnd: 'oid',
       }),
-      onPressFilterSortTitleId: getCategories.bind(null, {
+      onPressFilterSortTitleId: getSimpleCategories.bind(null, {
         sort: true,
       }),
     }),
-    [getCategories],
+    [getSimpleCategories],
   );
-
-  React.useEffect(getCategories, [getCategories]);
 
   return {
     ...onPressFilters,
     onPressResetCategory,
     categories,
     onPressAddCategory,
+    getSimpleCategories,
   };
 }
 

@@ -1,7 +1,9 @@
 import Database, {getDatabase} from '../Database';
-import CategoryModel from '../../models/CategoryModel';
+import type CategoryModel from '../../models/CategoryModel';
+import CategorySimpleModel from '../../models/CategorySimpleModel';
 import {CATEGORY_SCHEMA} from '../tables/CategoryTable';
 import QueryBuilder from 'react-native-realm-query';
+import {BRAND_SCHEMA} from '../tables/BrandTable';
 
 export type Filter = Partial<{
   betweenId: number[];
@@ -46,11 +48,14 @@ export const insertOrUpdateCategoryQuery = (
   });
 
 export const getCategoriesQuery = (filter?: Filter) =>
-  new Promise<CategoryModel[]>((resole, reject) => {
+  new Promise<CategorySimpleModel[]>((resole, reject) => {
     try {
-      const allCategory = new QueryBuilder<CategoryModel>(CATEGORY_SCHEMA);
+      const allCategory = new QueryBuilder<CategorySimpleModel>(
+        CATEGORY_SCHEMA,
+      );
 
       allCategory
+        .withHasMany(BRAND_SCHEMA)
         .when(filter?.id, (pQ, id) => {
           //get param from when
           pQ.where('id', '=', id);
@@ -106,7 +111,9 @@ export const getCategoriesQuery = (filter?: Filter) =>
         resole([]);
       }
 
-      resole(allCategory.get().map(pCategory => new CategoryModel(pCategory)));
+      resole(
+        allCategory.get().map(pCategory => new CategorySimpleModel(pCategory)),
+      );
     } catch (err) {
       reject(err);
     }

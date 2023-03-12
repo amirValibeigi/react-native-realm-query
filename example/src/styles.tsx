@@ -45,4 +45,7 @@ export const styles = StyleSheet.create({
   lyItem: {
     flexDirection: 'row',
   },
+  itemBrands: {
+    marginHorizontal: 16,
+  },
 });

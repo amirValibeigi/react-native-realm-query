@@ -1,5 +1,6 @@
 import type Realm from 'realm';
 import { getRealm } from './Config';
+import { schemaToId, schemaToTitle } from './Utils';
 
 export type WhereValueType =
   | string
@@ -59,10 +60,19 @@ export type QueryType = {
   value?: WhereType | string;
 };
 
+type WithType<T> = {
+  type: 'belongTo' | 'belongToMany' | 'hasOne' | 'hasMany';
+  ownerSchema: string;
+  childSchema: string;
+  ownerProperty?: keyof T | string;
+  childProperty?: string;
+};
+
 export default class QueryBuilder<T> {
   private schema: string;
   private realm: Realm;
   private queryList: QueryType[] = [];
+  private withList: WithType<T>[] = [];
   private sortList: SortType<T>[] = [];
   private vOffset = -1;
   private vLimit = -1;
@@ -73,7 +83,7 @@ export default class QueryBuilder<T> {
   }
 
   where(
-    property: WhereType | keyof T,
+    property: WhereType | keyof T | string,
     operator?: WhereOperatorType,
     value?: WhereValueType,
     isOr = false
@@ -239,7 +249,11 @@ export default class QueryBuilder<T> {
 
   get() {
     const query = this.getQuery();
-    let realmResults = this.realm.objects<T>(this.schema);
+    let realmResults:
+      | Realm.Results<T & Realm.Object<unknown, never>>
+      | (T & Realm.Object<unknown, never>)[] = this.realm.objects<T>(
+      this.schema
+    );
 
     if (query.length > 0) {
       realmResults = realmResults.filtered(query);
@@ -256,6 +270,15 @@ export default class QueryBuilder<T> {
       const vL = this.vLimit > 0 ? vO + this.vLimit : undefined;
 
       return realmResults.slice(vO, vL);
+    }
+
+    if (this.withList.length > 0) {
+      this.withList.forEach((pWith) => {
+        realmResults = this.getWith(
+          pWith,
+          realmResults as Realm.Results<T & Realm.Object<unknown, never>>
+        );
+      });
     }
 
     return realmResults;
@@ -405,6 +428,43 @@ export default class QueryBuilder<T> {
     return vDoneQuery.join('');
   }
 
+  getWith(
+    pWith: WithType<T>,
+    baseQuery: Realm.Results<T & Realm.Object<unknown, never>>
+  ) {
+    let vCP = pWith.childProperty ?? schemaToId(this.schema);
+    let vOP = pWith.ownerProperty ?? 'id';
+    const vMapTitle =
+      pWith.type === 'hasOne' || pWith.type === 'belongTo'
+        ? schemaToTitle(pWith.childSchema)
+        : pWith.childSchema;
+
+    if (pWith.type === 'belongTo' || pWith.type === 'belongToMany') {
+      vCP = pWith.childProperty ?? 'id';
+      vOP = pWith.ownerProperty ?? schemaToId(pWith.childSchema);
+    }
+
+    const ids = baseQuery.map((pBQ) => (pBQ as any)[vOP]);
+
+    const childQuery = new QueryBuilder(pWith.childSchema)
+      .where(vCP, '=', ids)
+      .get();
+
+    return baseQuery.map((pBQ) => {
+      const tmpObj = {};
+      const vChildObj = childQuery.filter(
+        (pCQ) => (pCQ as any)[vCP] === (pBQ as any)[vOP]
+      );
+
+      (tmpObj as any)[vMapTitle] =
+        pWith.type === 'hasOne' || pWith.type === 'belongTo'
+          ? vChildObj[0]
+          : vChildObj;
+
+      return Object.assign(pBQ, tmpObj);
+    });
+  }
+
   private safeValue(value?: Omit<WhereValueType, '(string|number)[]'> | null) {
     if (value === null || value === undefined) {
       return 'null';
@@ -431,5 +491,69 @@ export default class QueryBuilder<T> {
     }
 
     return operator;
+  }
+
+  withBelongTo<P>(
+    childSchema: string,
+    childProperty: keyof P | string = 'id',
+    ownerProperty?: keyof T | string
+  ) {
+    this.withList.push({
+      type: 'belongTo',
+      ownerSchema: this.schema,
+      childSchema,
+      childProperty,
+      ownerProperty,
+    } as WithType<T>);
+
+    return this;
+  }
+
+  withBelongToMany<P>(
+    childSchema: string,
+    ownerProperty: keyof T | string = 'id',
+    childProperty?: keyof P | string
+  ) {
+    this.withList.push({
+      type: 'belongToMany',
+      ownerSchema: this.schema,
+      childSchema,
+      childProperty,
+      ownerProperty,
+    } as WithType<T>);
+
+    return this;
+  }
+
+  withHasMany<P>(
+    childSchema: string,
+    ownerProperty: keyof T | string = 'id',
+    childProperty?: keyof P | string
+  ) {
+    this.withList.push({
+      type: 'hasMany',
+      ownerSchema: this.schema,
+      childSchema,
+      childProperty,
+      ownerProperty,
+    } as WithType<T>);
+
+    return this;
+  }
+
+  withHasOne<P>(
+    childSchema: string,
+    ownerProperty: keyof T | string = 'id',
+    childProperty?: keyof P | string
+  ) {
+    this.withList.push({
+      type: 'hasOne',
+      ownerSchema: this.schema,
+      childSchema,
+      childProperty,
+      ownerProperty,
+    } as WithType<T>);
+
+    return this;
   }
 }
