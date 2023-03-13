@@ -77,13 +77,13 @@ export default class ModelRelationship<T> {
   static firstOrFail<T>() {
     return new QueryBuilder<T>(this.getTable()).first();
   }
-  static find<T>(id: number, property?: 'id') {
+  static find<T>(id: number | string, property?: 'id') {
     return new QueryBuilder<T>(this.getTable()).find(id, property);
   }
-  static findOr<T, P>(id: number, value: P, property?: 'id') {
+  static findOr<T, P>(id: number | string, value: P, property?: 'id') {
     return new QueryBuilder<T>(this.getTable()).findOr(id, value, property);
   }
-  static findOrFail<T>(id: number, property?: 'id') {
+  static findOrFail<T>(id: number | string, property?: 'id') {
     return new QueryBuilder<T>(this.getTable()).findOrFail(id, property);
   }
   static where<T>(
@@ -121,6 +121,12 @@ export default class ModelRelationship<T> {
       value,
       insensitivity
     );
+  }
+  static when<T, P>(
+    value: P | undefined | null,
+    callback: (queryBuilder: QueryBuilder<T>, value: P) => void
+  ) {
+    return new QueryBuilder<T>(this.getTable()).when(value, callback);
   }
   static get<T>() {
     return new QueryBuilder<T>(this.getTable()).get();

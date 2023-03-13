@@ -6,6 +6,7 @@ import {
 import {
   clearCategoriesQuery,
   Filter,
+  getCategoriesModelBase,
   getCategoriesQuery,
   insertOrUpdateCategoryQuery,
 } from './database/queries/CategoryQuery';
@@ -20,6 +21,22 @@ export function useCategory() {
 
   const getSimpleCategories = React.useCallback((filter?: Filter) => {
     getCategoriesQuery(filter).then(pCategories => {
+      if (pCategories) {
+        setCategories(pCategories);
+
+        if (pCategories.length > 0) {
+          setCategoryId(
+            (pCategories
+              .map(pC => pC.id ?? 0)
+              .sort((a: number, b: number) => b - a)[0] ?? 0) + 1,
+          );
+        }
+      }
+    });
+  }, []);
+
+  const getModelBaseCategories = React.useCallback((filter?: Filter) => {
+    getCategoriesModelBase(filter).then(pCategories => {
       if (pCategories) {
         setCategories(pCategories);
 
@@ -61,7 +78,7 @@ export function useCategory() {
 
   const onPressFilters = React.useMemo(
     () => ({
-      onPressResetFilter: getSimpleCategories,
+      onPressResetFilter: () => setCategories([]),
       onPressFilterId: getSimpleCategories.bind(null, {id: 2}),
       onPressFilterIdTwo: getSimpleCategories.bind(null, {id: [1, 3]}),
       onPressFilterLikeTitle: getSimpleCategories.bind(null, {
@@ -89,8 +106,37 @@ export function useCategory() {
       onPressFilterSortTitleId: getSimpleCategories.bind(null, {
         sort: true,
       }),
+      onPressModelBaseFilterId: getModelBaseCategories.bind(null, {id: 2}),
+      onPressModelBaseFilterIdTwo: getModelBaseCategories.bind(null, {
+        id: [1, 3],
+      }),
+      onPressModelBaseFilterLikeTitle: getModelBaseCategories.bind(null, {
+        title: 'android',
+      }),
+      onPressModelBaseFilterIdOrTitle: getModelBaseCategories.bind(null, {
+        id: [1],
+        title: 'android',
+      }),
+      onPressModelBaseFilterFindId: getModelBaseCategories.bind(null, {
+        findId: 4,
+      }),
+      onPressModelBaseFilterRaw: getModelBaseCategories.bind(null, {
+        raw: "title contains 'i' and (id = 1 or id = 3)",
+      }),
+      onPressModelBaseFilterBetweenId: getModelBaseCategories.bind(null, {
+        betweenId: [2, 5],
+      }),
+      onPressModelBaseFilterTitleStart: getModelBaseCategories.bind(null, {
+        titleStart: 'win',
+      }),
+      onPressModelBaseFilterTitleEnd: getModelBaseCategories.bind(null, {
+        titleEnd: 'oid',
+      }),
+      onPressModelBaseFilterSortTitleId: getModelBaseCategories.bind(null, {
+        sort: true,
+      }),
     }),
-    [getSimpleCategories],
+    [getSimpleCategories, getModelBaseCategories],
   );
 
   return {
@@ -99,6 +145,7 @@ export function useCategory() {
     categories,
     onPressAddCategory,
     getSimpleCategories,
+    getModelBaseCategories,
   };
 }
 

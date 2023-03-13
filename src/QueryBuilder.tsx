@@ -60,19 +60,26 @@ export type QueryType = {
   value?: WhereType | string;
 };
 
-type WithType<T> = {
+type WithType<T, P> = {
   type: 'belongTo' | 'belongToMany' | 'hasOne' | 'hasMany';
   ownerSchema: string;
   childSchema: string;
   ownerProperty?: keyof T | string;
   childProperty?: string;
+  mapTo?: new (json?: any) => P;
+};
+
+type WithOptionType<T, P> = {
+  ownerProperty?: keyof T | string;
+  childProperty?: keyof P | string;
+  mapTo?: new (json?: any) => P;
 };
 
 export default class QueryBuilder<T> {
   private schema: string;
   private realm: Realm;
   private queryList: QueryType[] = [];
-  private withList: WithType<T>[] = [];
+  private withList: WithType<T, unknown>[] = [];
   private sortList: SortType<T>[] = [];
   private vOffset = -1;
   private vLimit = -1;
@@ -265,13 +272,6 @@ export default class QueryBuilder<T> {
       );
     }
 
-    if (this.vLimit >= 0 || this.vOffset >= 0) {
-      const vO = this.vOffset > 0 ? this.vOffset : 0;
-      const vL = this.vLimit > 0 ? vO + this.vLimit : undefined;
-
-      return realmResults.slice(vO, vL);
-    }
-
     if (this.withList.length > 0) {
       this.withList.forEach((pWith) => {
         realmResults = this.getWith(
@@ -281,10 +281,17 @@ export default class QueryBuilder<T> {
       });
     }
 
+    if (this.vLimit >= 0 || this.vOffset >= 0) {
+      const vO = this.vOffset > 0 ? this.vOffset : 0;
+      const vL = this.vLimit > 0 ? vO + this.vLimit : undefined;
+
+      return realmResults.slice(vO, vL);
+    }
+
     return realmResults;
   }
 
-  find(id: number, property: keyof T | 'id' = 'id') {
+  find(id: number | string, property: keyof T | 'id' = 'id') {
     const vValue = this.where(property as keyof T, '=', id).get()[0];
 
     this.queryList.pop();
@@ -292,11 +299,11 @@ export default class QueryBuilder<T> {
     return vValue;
   }
 
-  findOr<P>(id: number, value: P, property: keyof T | 'id' = 'id') {
+  findOr<P>(id: number | string, value: P, property: keyof T | 'id' = 'id') {
     return this.find(id, property) ?? value;
   }
 
-  findOrFail(id: number, property: keyof T | 'id' = 'id') {
+  findOrFail(id: number | string, property: keyof T | 'id' = 'id') {
     const vValue = this.find(id, property);
 
     if (vValue === null || vValue === undefined) {
@@ -429,7 +436,7 @@ export default class QueryBuilder<T> {
   }
 
   getWith(
-    pWith: WithType<T>,
+    pWith: WithType<T, unknown>,
     baseQuery: Realm.Results<T & Realm.Object<unknown, never>>
   ) {
     let vCP = pWith.childProperty ?? schemaToId(this.schema);
@@ -450,11 +457,17 @@ export default class QueryBuilder<T> {
       .where(vCP, '=', ids)
       .get();
 
+    const ClassC = pWith.mapTo;
+
     return baseQuery.map((pBQ) => {
       const tmpObj = {};
-      const vChildObj = childQuery.filter(
+      let vChildObj: any = childQuery.filter(
         (pCQ) => (pCQ as any)[vCP] === (pBQ as any)[vOP]
       );
+
+      if (ClassC) {
+        vChildObj = vChildObj.map((pVCO: any) => new ClassC(pVCO));
+      }
 
       (tmpObj as any)[vMapTitle] =
         pWith.type === 'hasOne' || pWith.type === 'belongTo'
@@ -493,66 +506,54 @@ export default class QueryBuilder<T> {
     return operator;
   }
 
-  withBelongTo<P>(
-    childSchema: string,
-    childProperty: keyof P | string = 'id',
-    ownerProperty?: keyof T | string
-  ) {
+  withBelongTo<P>(childSchema: string, option?: WithOptionType<T, P>) {
     this.withList.push({
+      ...option,
       type: 'belongTo',
       ownerSchema: this.schema,
       childSchema,
-      childProperty,
-      ownerProperty,
-    } as WithType<T>);
+      childProperty: option?.childProperty ?? 'id',
+      ownerProperty: option?.ownerProperty,
+    } as WithType<T, P>);
 
     return this;
   }
 
-  withBelongToMany<P>(
-    childSchema: string,
-    ownerProperty: keyof T | string = 'id',
-    childProperty?: keyof P | string
-  ) {
+  withBelongToMany<P>(childSchema: string, option?: WithOptionType<T, P>) {
     this.withList.push({
+      ...option,
       type: 'belongToMany',
       ownerSchema: this.schema,
       childSchema,
-      childProperty,
-      ownerProperty,
-    } as WithType<T>);
+      childProperty: option?.childProperty,
+      ownerProperty: option?.ownerProperty ?? 'id',
+    } as WithType<T, P>);
 
     return this;
   }
 
-  withHasMany<P>(
-    childSchema: string,
-    ownerProperty: keyof T | string = 'id',
-    childProperty?: keyof P | string
-  ) {
+  withHasMany<P>(childSchema: string, option?: WithOptionType<T, P>) {
     this.withList.push({
+      ...option,
       type: 'hasMany',
       ownerSchema: this.schema,
       childSchema,
-      childProperty,
-      ownerProperty,
-    } as WithType<T>);
+      childProperty: option?.childProperty,
+      ownerProperty: option?.ownerProperty ?? 'id',
+    } as WithType<T, P>);
 
     return this;
   }
 
-  withHasOne<P>(
-    childSchema: string,
-    ownerProperty: keyof T | string = 'id',
-    childProperty?: keyof P | string
-  ) {
+  withHasOne<P>(childSchema: string, option?: WithOptionType<T, P>) {
     this.withList.push({
+      ...option,
       type: 'hasOne',
       ownerSchema: this.schema,
       childSchema,
-      childProperty,
-      ownerProperty,
-    } as WithType<T>);
+      childProperty: option?.childProperty,
+      ownerProperty: option?.ownerProperty ?? 'id',
+    } as WithType<T, P>);
 
     return this;
   }

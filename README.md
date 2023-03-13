@@ -8,15 +8,145 @@ realm query
 npm install react-native-realm-query
 ```
 
-## Usage
+## Usage query builder
 
 ```js
-import { multiply } from 'react-native-realm-query';
+import QueryBuilder, { setRealm } from 'react-native-realm-query';
 
 // ...
 
-const result = await multiply(3, 7);
+setRealm(DATABASE); //for base model
+
+console.log(new QueryBuilder(SCHEMA_NAME).get());
 ```
+
+> [{...},{...},{...}]
+
+## Usage base model
+
+```js
+import { ModelRelationship } from 'react-native-realm-query';
+import { BRAND_SCHEMA } from '@tables/BrandTable';
+import { CATEGORY_SCHEMA } from '@tables/CategoryTable';
+
+interface BrandModelType {
+  //...
+}
+
+export default class BrandModel extends ModelRelationship<BrandModelType> {
+  constructor(json: BrandModelType) {
+    super();
+    this.id = json.id;
+    this.title = json.title;
+    //...
+  }
+
+  categories() {
+    return this.hasMany(CATEGORY_SCHEMA);
+  }
+}
+
+BrandModel.getTable = () => BRAND_SCHEMA;
+```
+
+```js
+import BrandModel from '@models/BrandModel';
+
+const brands = BrandModel.get().map((pB) => new BrandModel(pB));
+
+console.log(brands);
+console.log(brands[0].categories());
+```
+
+> [{id:1,title:'samsung'},{...},{...}]
+
+> [{id:1,brand_id:1,title:'phone'},{...},{...}]
+
+---
+
+## Query Builder Methods
+
+- and
+- find(id, property?)
+- findOr(id, value, property?)
+- findOrFail(id)
+- first
+- firstOr(value)
+- firstOrFail
+- get
+- getQuery
+- groupEnd
+- groupStart
+- limit(count, offset)
+- offset(offset)
+- or
+- orWhere(WhereType | keyof T | string, WhereOperatorType?, WhereValueType?)
+- orWhereBetween(property, a, b)
+- orWhereEnd(property, text)
+- orWhereRaw(query)
+- orWhereStart(property, text)
+- sort(property, ASC | DESC)
+- when(value?, (queryBuilder, value) => void)
+- where(WhereType | keyof T | string, WhereOperatorType?, WhereValueType?)
+- whereBetween(property, a, b)
+- whereEnd(property, text)
+- whereRaw(query)
+- whereStart(property, text)
+- withBelongTo(schemaName,WithOption)
+- withBelongToMany(schemaName,WithOption)
+- withHasMany(schemaName,WithOption)
+- withHasOne(schemaName,WithOption)
+
+#### WithOption
+
+- ownerProperty? keyof T | string
+- childProperty? keyof P | string
+- mapTo?: new (json:any) => P
+
+#### WhereType
+
+- property: string
+- operator?: WhereOperatorType
+- value: WhereValueType
+
+#### WhereOperatorType
+
+'!' | '!=' | '<' | '<=' | '<==' | '<>' | '=' | '==' | '>' | '>=' | '>==' | 'BEGINSWITH' | 'BEGINSWITH[c]' | 'CONTAINS' | 'CONTAINS[c]' | 'ENDSWITH' | 'ENDSWITH[c]' | 'LIKE' | 'LIKE[c]'
+
+#### WhereValueType
+
+string | number | (string | number)[] | null | undefined
+
+---
+
+## Base Model methods
+
+- belongTo(schema, childProperty? = 'id', ownerProperty?)
+- belongToMany(schema, ownerProperty? = 'id', childProperty?)
+- hasMany(schema, ownerProperty? = 'id', childProperty?)
+- hasOne(schema, ownerProperty? = 'id', childProperty?)
+- static getTableName
+- static find
+- static findOr
+- static findOrFail
+- static first
+- static firstOr
+- static firstOrFail
+- static get
+- static when
+- static where
+- static whereBetween
+- static whereEnd
+- static whereStart
+
+---
+
+## next version
+
+- whereType
+- whereHas
+- sum
+- avg
 
 ## Contributing
 
