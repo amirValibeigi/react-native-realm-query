@@ -17,6 +17,7 @@ function RenderItem({item}: RenderItemProps) {
       <View style={styles.lyItem}>
         <Text>#{item.id}: </Text>
         <Text>{item.title}</Text>
+        <Text style={styles.date}>{item.created_at?.toString()}</Text>
       </View>
 
       <View style={styles.itemBrands}>

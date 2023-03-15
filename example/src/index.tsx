@@ -37,6 +37,7 @@ const Header = ({
   onPressFilterBetweenId,
   onPressFilterTitleStart,
   onPressFilterTitleEnd,
+  onPressFilterTypeDate,
   onPressFilterSortTitleId,
 
   getModelBaseCategories,
@@ -71,6 +72,7 @@ const Header = ({
         <Btn onPress={onPressFilterSortTitleId}>
           sort title ASC,id DESC limit 6,3
         </Btn>
+        <Btn onPress={onPressFilterTypeDate}>type date</Btn>
       </GroupView>
       <GroupView title="filter model base category">
         <Btn onPress={onPressModelBaseFilterId}>id</Btn>

@@ -21,6 +21,7 @@ export const styles = StyleSheet.create({
   btnTitle: {
     margin: 4,
     color: '#fff',
+    fontSize: 12,
   },
   groupView: {
     flexDirection: 'row',
@@ -47,5 +48,13 @@ export const styles = StyleSheet.create({
   },
   itemBrands: {
     marginHorizontal: 16,
+  },
+  date: {
+    flex: 1,
+    marginHorizontal: 8,
+    fontSize: 10,
+    color: '#EF6C00',
+    textAlignVertical: 'center',
+    paddingTop: 1,
   },
 });

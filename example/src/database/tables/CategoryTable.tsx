@@ -8,5 +8,6 @@ export const CategorySchema: ObjectSchema = {
   properties: {
     id: 'int',
     title: 'string?',
+    created_at: 'mixed?',
   },
 };

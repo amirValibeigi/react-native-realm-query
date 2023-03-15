@@ -6,6 +6,7 @@ import BrandModel from './BrandModel';
 export interface CategoryModelType {
   id?: number;
   title?: string;
+  created_at?: string | number | Date;
 }
 
 export default class CategoryModel
@@ -14,12 +15,14 @@ export default class CategoryModel
 {
   declare id?: number;
   declare title?: string;
+  declare created_at?: string | number | Date;
 
   constructor(json: CategoryModelType) {
     super();
 
     this.id = json.id;
     this.title = json.title;
+    this.created_at = json.created_at;
   }
 
   brands() {

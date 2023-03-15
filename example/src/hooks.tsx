@@ -103,9 +103,13 @@ export function useCategory() {
       onPressFilterTitleEnd: getSimpleCategories.bind(null, {
         titleEnd: 'oid',
       }),
+      onPressFilterTypeDate: getSimpleCategories.bind(null, {
+        typeDate: true,
+      }),
       onPressFilterSortTitleId: getSimpleCategories.bind(null, {
         sort: true,
       }),
+
       onPressModelBaseFilterId: getModelBaseCategories.bind(null, {id: 2}),
       onPressModelBaseFilterIdTwo: getModelBaseCategories.bind(null, {
         id: [1, 3],
@@ -153,18 +157,22 @@ const initCategories = [
   new CategoryModel({
     id: 1,
     title: 'windows',
+    created_at: Date.now(),
   }),
   new CategoryModel({
     id: 2,
     title: 'android',
+    created_at: new Date(),
   }),
   new CategoryModel({
     id: 3,
     title: 'ios',
+    created_at: '2012/12/12 12:12:12',
   }),
   new CategoryModel({
     id: 4,
     title: 'mac',
+    created_at: '12/12/12',
   }),
 ];
 

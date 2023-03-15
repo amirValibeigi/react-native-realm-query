@@ -17,6 +17,7 @@ export type WhereOperatorType =
   | '<>'
   | '='
   | '=='
+  | '==='
   | '>'
   | '>='
   | '>=='
@@ -55,12 +56,11 @@ export type QueryType = {
     | 'sort'
     | 'where'
     | 'whereBetween'
-    | 'whereRaw'
-    | 'whereType';
+    | 'whereRaw';
   value?: WhereType | string;
 };
 
-type WithType<T, P> = {
+export type WithType<T, P> = {
   type: 'belongTo' | 'belongToMany' | 'hasOne' | 'hasMany';
   ownerSchema: string;
   childSchema: string;
@@ -69,11 +69,31 @@ type WithType<T, P> = {
   mapTo?: new (json?: any) => P;
 };
 
-type WithOptionType<T, P> = {
+export type WithOptionType<T, P> = {
   ownerProperty?: keyof T | string;
   childProperty?: keyof P | string;
   mapTo?: new (json?: any) => P;
 };
+
+export enum ValueType {
+  bool = 'bool',
+  int = 'int',
+  float = 'float',
+  double = 'double',
+  string = 'string',
+  decimal128 = 'decimal128',
+  objectId = 'objectId',
+  data = 'data',
+  date = 'date',
+  list = 'list',
+  linkingObjects = 'linkingObjects',
+  dictionary = 'dictionary',
+}
+
+const REGEX_DATE =
+  /^([0-9]{1,4}(\/|-)){2}[0-9]{1,4}(((@|T| )(2[0-3]|[01][0-9]):[0-5][0-9]:[0-5][0-9])|)$/;
+
+const CHECK_TYPE: WhereOperatorType[] = ['===', '<==', '>=='];
 
 export default class QueryBuilder<T> {
   private schema: string;
@@ -95,13 +115,19 @@ export default class QueryBuilder<T> {
     value?: WhereValueType,
     isOr = false
   ) {
-    if ((property as WhereType).property) {
-      this.queryList.push({
-        type: isOr ? 'orWhere' : 'where',
-        value: property as WhereType,
-      });
+    if ((property as WhereType)?.property) {
+      this.where(
+        (property as WhereType).property,
+        (property as WhereType).operator,
+        (property as WhereType).value,
+        isOr
+      );
 
       return this;
+    }
+
+    if (operator && CHECK_TYPE.includes(operator)) {
+      this.groupStart();
     }
 
     this.queryList.push({
@@ -112,6 +138,10 @@ export default class QueryBuilder<T> {
         operator,
       } as WhereType,
     });
+
+    if (operator && CHECK_TYPE.includes(operator)) {
+      this.whereType(property as string, value as any).groupEnd();
+    }
 
     return this;
   }
@@ -178,6 +208,40 @@ export default class QueryBuilder<T> {
 
   orWhereStart(property: keyof T, value: string, insensitivity = false) {
     return this.whereStart(property, value, insensitivity, true);
+  }
+
+  whereType(
+    property: keyof T | string,
+    value: ValueType | string | (ValueType | string)[] | number,
+    isOr = false
+  ) {
+    const vType = this.getTypeValue(value);
+
+    if (vType instanceof Array) {
+      this.groupStart();
+    }
+
+    this.queryList.push({
+      type: isOr ? 'orWhere' : 'where',
+      value: {
+        property: `${property as string}.@type`,
+        value: vType,
+        operator: '==',
+      } as WhereType,
+    });
+
+    if (vType instanceof Array) {
+      this.groupEnd();
+    }
+
+    return this;
+  }
+
+  orWhereType(
+    property: keyof T | string,
+    value: ValueType | string | (ValueType | string)[] | number
+  ) {
+    return this.whereType(property, value, true);
   }
 
   whereEnd(
@@ -351,10 +415,12 @@ export default class QueryBuilder<T> {
 
     if (this.queryList.length > 0) {
       let index = 0;
+      let indexGroupStart = -1;
       let lastQuery: QueryType | undefined;
 
       do {
         const currentQuery = this.queryList[index];
+        const currentType = currentQuery!.type.toLowerCase();
         let vQuery = '';
 
         switch (currentQuery!.type) {
@@ -402,6 +468,9 @@ export default class QueryBuilder<T> {
 
           case 'groupStart':
             vQuery = '(';
+            if (indexGroupStart === -1) {
+              indexGroupStart = vDoneQuery.length;
+            }
             break;
 
           case 'and':
@@ -413,17 +482,32 @@ export default class QueryBuilder<T> {
             break;
         }
 
-        if (lastQuery && lastQuery.type !== 'groupStart') {
+        if (
+          lastQuery &&
+          lastQuery.type !== 'groupStart' &&
+          (index > indexGroupStart + 1 || indexGroupStart === -1)
+        ) {
           switch (currentQuery!.type) {
             case 'where':
             case 'whereRaw':
+            case 'whereBetween':
               vQuery = ' AND ' + vQuery;
               break;
             case 'orWhere':
             case 'orWhereRaw':
+            case 'orWhereBetween':
               vQuery = ' OR ' + vQuery;
               break;
           }
+        }
+
+        if (indexGroupStart > 0 && currentType.indexOf('where') >= 0) {
+          vDoneQuery.splice(
+            indexGroupStart,
+            0,
+            currentQuery!.type.includes('or') ? ' OR ' : ' AND '
+          );
+          indexGroupStart = -1;
         }
 
         vDoneQuery.push(vQuery);
@@ -503,7 +587,37 @@ export default class QueryBuilder<T> {
       return 'CONTAINS';
     }
 
+    if (CHECK_TYPE.includes(operator)) {
+      return operator.substring(0, 2);
+    }
+
     return operator;
+  }
+
+  private getTypeValue(
+    value: ValueType | string | (ValueType | string)[] | number
+  ) {
+    if (value instanceof Array) {
+      return value.map(this.mapToTypeValue);
+    }
+
+    return this.mapToTypeValue(value);
+  }
+
+  private mapToTypeValue(value: ValueType | string | number) {
+    if (value in ValueType) {
+      return value;
+    }
+
+    if (isFinite(value as any)) {
+      return [ValueType.int, ValueType.float, ValueType.double];
+    }
+
+    if ((value as string).match(REGEX_DATE) !== null) {
+      return ValueType.date;
+    }
+
+    return ValueType.string;
   }
 
   withBelongTo<P>(childSchema: string, option?: WithOptionType<T, P>) {

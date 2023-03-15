@@ -2,7 +2,7 @@ import Database, {getDatabase} from '../Database';
 import CategoryModel from '../../models/CategoryModel';
 import CategorySimpleModel from '../../models/CategorySimpleModel';
 import {CATEGORY_SCHEMA} from '../tables/CategoryTable';
-import QueryBuilder from 'react-native-realm-query';
+import QueryBuilder, {ValueType} from 'react-native-realm-query';
 import {BRAND_SCHEMA} from '../tables/BrandTable';
 import BrandSimpleModel from '../../models/BrandSimpleModel';
 
@@ -15,6 +15,7 @@ export type Filter = Partial<{
   title: string | string[];
   titleEnd: string;
   titleStart: string;
+  typeDate: boolean;
 }>;
 
 export const insertOrUpdateCategoryQuery = (
@@ -101,6 +102,13 @@ export const getCategoriesQuery = (filter?: Filter) =>
         })
         .when(filter?.titleEnd, (pQ, titleEnd) => {
           pQ.whereEnd('title', titleEnd);
+        })
+        .when(filter?.typeDate, pQ => {
+          //type is string or int,float,double
+          pQ.whereType('created_at', ValueType.string).orWhereType(
+            'created_at',
+            100000,
+          );
         })
         .when(filter?.sort, pQ => {
           pQ.sort('title', 'ASC').sort('id', 'DESC').limit(6, 3);

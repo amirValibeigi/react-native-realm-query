@@ -1,4 +1,5 @@
 import QueryBuilder, {
+  ValueType,
   WhereOperatorType,
   WhereType,
   WhereValueType,
@@ -96,6 +97,12 @@ export default class ModelRelationship<T> {
       operator,
       value
     );
+  }
+  static whereType<T>(
+    property: keyof T | string,
+    value: ValueType | string | (ValueType | string)[] | number
+  ) {
+    return new QueryBuilder<T>(this.getTable()).whereType(property, value);
   }
   static whereBetween<T>(
     property: WhereType | keyof T,

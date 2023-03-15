@@ -85,6 +85,7 @@ console.log(brands[0].categories());
 - orWhereEnd(property, text)
 - orWhereRaw(query)
 - orWhereStart(property, text)
+- orWhereType(property: keyof T | string, value: ValueType | string | (ValueType | string)[] | number)
 - sort(property, ASC | DESC)
 - when(value?, (queryBuilder, value) => void)
 - where(WhereType | keyof T | string, WhereOperatorType?, WhereValueType?)
@@ -92,6 +93,7 @@ console.log(brands[0].categories());
 - whereEnd(property, text)
 - whereRaw(query)
 - whereStart(property, text)
+- whereType(property: keyof T | string, value: ValueType | string | (ValueType | string)[] | number)
 - withBelongTo(schemaName,WithOption)
 - withBelongToMany(schemaName,WithOption)
 - withHasMany(schemaName,WithOption)
@@ -125,7 +127,6 @@ string | number | (string | number)[] | null | undefined
 - belongToMany(schema, ownerProperty? = 'id', childProperty?)
 - hasMany(schema, ownerProperty? = 'id', childProperty?)
 - hasOne(schema, ownerProperty? = 'id', childProperty?)
-- static getTableName
 - static find
 - static findOr
 - static findOrFail
@@ -133,17 +134,18 @@ string | number | (string | number)[] | null | undefined
 - static firstOr
 - static firstOrFail
 - static get
+- static getTableName
 - static when
 - static where
 - static whereBetween
 - static whereEnd
 - static whereStart
+- static whereType
 
 ---
 
 ## next version
 
-- whereType
 - whereHas
 - sum
 - avg
