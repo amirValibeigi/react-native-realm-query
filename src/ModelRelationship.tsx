@@ -87,37 +87,158 @@ export default class ModelRelationship<T> {
   static findOrFail<T>(id: number | string, property?: 'id') {
     return new QueryBuilder<T>(this.getTable()).findOrFail(id, property);
   }
+
   static where<T>(
-    property: WhereType | keyof T,
-    operator?: WhereOperatorType | undefined,
+    property: keyof T,
+    operator?: WhereOperatorType,
+    value?: WhereValueType,
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  static where<T>(
+    property: string,
+    operator?: WhereOperatorType,
+    value?: WhereValueType,
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  static where<T>(
+    property: (queryBuilder: QueryBuilder<T>) => void,
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  static where<T>(property: WhereType, isOr?: boolean): QueryBuilder<T>;
+  static where<T>(
+    property:
+      | WhereType
+      | keyof T
+      | string
+      | ((queryBuilder: QueryBuilder<T>) => void),
+    operator?: WhereOperatorType | boolean,
     value?: WhereValueType
   ) {
+    if ((property as WhereType)?.property) {
+      return new QueryBuilder<T>(this.getTable()).where(property as WhereType);
+    }
+
     return new QueryBuilder<T>(this.getTable()).where(
-      property,
-      operator,
+      property as keyof T,
+      operator as any,
       value
     );
   }
+
+  static whereType<T>(
+    property: keyof T,
+    value:
+      | keyof typeof ValueType
+      | ValueType
+      | (keyof typeof ValueType | ValueType)[]
+      | (string | number)[],
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  static whereType<T>(
+    property: string,
+    value:
+      | keyof typeof ValueType
+      | ValueType
+      | (keyof typeof ValueType | ValueType)[]
+      | (string | number)[],
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  static whereType<T>(
+    property: keyof T,
+    value: string | number,
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  static whereType<T>(
+    property: string,
+    value: string | number,
+    isOr?: boolean
+  ): QueryBuilder<T>;
   static whereType<T>(
     property: keyof T | string,
-    value: ValueType | string | (ValueType | string)[] | number
+    value:
+      | keyof typeof ValueType
+      | ValueType
+      | string
+      | number
+      | (keyof typeof ValueType | ValueType)[]
+      | (string | number)[]
   ) {
-    return new QueryBuilder<T>(this.getTable()).whereType(property, value);
+    return new QueryBuilder<T>(this.getTable()).whereType(
+      property as string,
+      value as any
+    );
   }
+
   static whereBetween<T>(
-    property: WhereType | keyof T,
+    property: keyof T,
     a?: number,
+    b?: number,
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  static whereBetween<T>(
+    property: string,
+    a?: number,
+    b?: number,
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  static whereBetween<T>(
+    property: Omit<WhereType, 'operator'>,
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  static whereBetween<T>(
+    property: Omit<WhereType, 'operator'> | keyof T | string,
+    a?: number | boolean,
     b?: number
   ) {
-    return new QueryBuilder<T>(this.getTable()).whereBetween(property, a, b);
+    if ((property as WhereType)?.property) {
+      return new QueryBuilder<T>(this.getTable()).whereBetween(
+        property as WhereType
+      );
+    }
+
+    return new QueryBuilder<T>(this.getTable()).whereBetween(
+      property as keyof T,
+      a as any,
+      b
+    );
   }
-  static whereEnd<T>(property: keyof T, value: string, insensitivity = false) {
+
+  static whereEnd<T>(
+    property: keyof T,
+    value: string,
+    insensitivity?: boolean,
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  static whereEnd<T>(
+    property: string,
+    value: string,
+    insensitivity?: boolean,
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  static whereEnd<T>(
+    property: keyof T | string,
+    value: string,
+    insensitivity = false
+  ) {
     return new QueryBuilder<T>(this.getTable()).whereEnd(
-      property,
+      property as string,
       value,
       insensitivity
     );
   }
+
+  static whereStart<T>(
+    property: keyof T,
+    value: string,
+    insensitivity?: boolean,
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  static whereStart<T>(
+    property: string,
+    value: string,
+    insensitivity?: boolean,
+    isOr?: boolean
+  ): QueryBuilder<T>;
   static whereStart<T>(
     property: keyof T,
     value: string,
@@ -137,5 +258,23 @@ export default class ModelRelationship<T> {
   }
   static get<T>() {
     return new QueryBuilder<T>(this.getTable()).get();
+  }
+
+  static count<T>(property?: keyof T): number;
+  static count(property?: string): number;
+  static count<T>(property?: keyof T | string) {
+    return new QueryBuilder<T>(this.getTable()).count(property as string);
+  }
+
+  static avg<T>(property: keyof T): number;
+  static avg(property: string): number;
+  static avg<T>(property: keyof T | string) {
+    return new QueryBuilder<T>(this.getTable()).avg(property as string);
+  }
+
+  static sum<T>(property: keyof T): number;
+  static sum(property: string): number;
+  static sum<T>(property: keyof T | string) {
+    return new QueryBuilder<T>(this.getTable()).sum(property as string);
   }
 }

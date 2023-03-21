@@ -110,6 +110,16 @@ export function useCategory() {
         sort: true,
       }),
 
+      onPressAvgCount: getSimpleCategories.bind(null, {
+        avgCount: true,
+      }),
+      onPressSumCount: getSimpleCategories.bind(null, {
+        sumCount: true,
+      }),
+      onPressCount: getSimpleCategories.bind(null, {
+        count: true,
+      }),
+
       onPressModelBaseFilterId: getModelBaseCategories.bind(null, {id: 2}),
       onPressModelBaseFilterIdTwo: getModelBaseCategories.bind(null, {
         id: [1, 3],
@@ -180,26 +190,31 @@ const initBrands = [
   new BrandModel({
     id: 1,
     category_id: 1,
+    count: 3,
     title: 'microsoft',
   }),
   new BrandModel({
     id: 2,
     category_id: 2,
+    count: 2,
     title: 'samsung',
   }),
   new BrandModel({
     id: 3,
     category_id: 2,
+    count: 6,
     title: 'sony',
   }),
   new BrandModel({
     id: 4,
     category_id: 3,
+    count: 1,
     title: 'apple',
   }),
   new BrandModel({
     id: 5,
     category_id: 4,
+    count: 0,
     title: 'apple',
   }),
 ];

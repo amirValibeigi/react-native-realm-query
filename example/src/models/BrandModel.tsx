@@ -5,6 +5,7 @@ import {CATEGORY_SCHEMA} from '../database/tables/CategoryTable';
 export interface BrandModelType {
   id?: number;
   category_id?: number;
+  count?: number;
   title?: string;
 }
 
@@ -14,6 +15,7 @@ export default class BrandModel
 {
   declare id?: number;
   declare category_id?: number;
+  declare count?: number;
   declare title?: string;
 
   constructor(json: BrandModelType) {
@@ -21,6 +23,7 @@ export default class BrandModel
 
     this.id = json.id;
     this.category_id = json.category_id;
+    this.count = json.count;
     this.title = json.title;
   }
 

@@ -67,6 +67,8 @@ console.log(brands[0].categories());
 ## Query Builder Methods
 
 - and
+- avg((keyof T | string)?)
+- count((keyof T | string)?)
 - find(id, property?)
 - findOr(id, value, property?)
 - findOrFail(id)
@@ -87,6 +89,7 @@ console.log(brands[0].categories());
 - orWhereStart(property, text)
 - orWhereType(property: keyof T | string, value: ValueType | string | (ValueType | string)[] | number)
 - sort(property, ASC | DESC)
+- sum((keyof T | string)?)
 - when(value?, (queryBuilder, value) => void)
 - where(WhereType | keyof T | string, WhereOperatorType?, WhereValueType?)
 - whereBetween(property, a, b)
@@ -127,6 +130,8 @@ string | number | (string | number)[] | null | undefined
 - belongToMany(schema, ownerProperty? = 'id', childProperty?)
 - hasMany(schema, ownerProperty? = 'id', childProperty?)
 - hasOne(schema, ownerProperty? = 'id', childProperty?)
+- static avg
+- static count
 - static find
 - static findOr
 - static findOrFail
@@ -135,6 +140,7 @@ string | number | (string | number)[] | null | undefined
 - static firstOrFail
 - static get
 - static getTableName
+- static sum
 - static when
 - static where
 - static whereBetween
@@ -147,8 +153,6 @@ string | number | (string | number)[] | null | undefined
 ## next version
 
 - whereHas
-- sum
-- avg
 
 ## Contributing
 

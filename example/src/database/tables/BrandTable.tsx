@@ -8,6 +8,7 @@ export const BrandSchema: ObjectSchema = {
   properties: {
     id: 'int',
     category_id: 'int',
+    count: 'int',
     title: 'string?',
   },
 };

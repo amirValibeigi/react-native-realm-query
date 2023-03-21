@@ -40,6 +40,10 @@ const Header = ({
   onPressFilterTypeDate,
   onPressFilterSortTitleId,
 
+  onPressAvgCount,
+  onPressSumCount,
+  onPressCount,
+
   getModelBaseCategories,
   onPressModelBaseFilterId,
   onPressModelBaseFilterIdTwo,
@@ -59,6 +63,9 @@ const Header = ({
       <Btn onPress={onPressResetFilter}>reset</Btn>
       <Btn onPress={getSimpleCategories}>get category with query</Btn>
       <Btn onPress={getModelBaseCategories}>get category with model base</Btn>
+      <Btn onPress={onPressAvgCount}>avg `count`</Btn>
+      <Btn onPress={onPressSumCount}>sum `count`</Btn>
+      <Btn onPress={onPressCount}>count categories and brands</Btn>
       <GroupView title="filter queryBuilder category">
         <Btn onPress={onPressFilterId}>id</Btn>
         <Btn onPress={onPressFilterIdTwo}>two id</Btn>

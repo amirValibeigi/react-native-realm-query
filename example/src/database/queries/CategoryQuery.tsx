@@ -7,6 +7,7 @@ import {BRAND_SCHEMA} from '../tables/BrandTable';
 import BrandSimpleModel from '../../models/BrandSimpleModel';
 
 export type Filter = Partial<{
+  avgCount: boolean;
   betweenId: number[];
   findId: number;
   id: number | number[];
@@ -16,6 +17,8 @@ export type Filter = Partial<{
   titleEnd: string;
   titleStart: string;
   typeDate: boolean;
+  count: boolean;
+  sumCount: boolean;
 }>;
 
 export const insertOrUpdateCategoryQuery = (
@@ -102,6 +105,16 @@ export const getCategoriesQuery = (filter?: Filter) =>
         })
         .when(filter?.titleEnd, (pQ, titleEnd) => {
           pQ.whereEnd('title', titleEnd);
+        })
+        .when(filter?.avgCount, pQ => {
+          console.log('avgCount', pQ.avg('brands.count'));
+        })
+        .when(filter?.sumCount, pQ => {
+          console.log('sumCount', pQ.sum('brands.count'));
+        })
+        .when(filter?.count, pQ => {
+          console.log('count categories', pQ.count());
+          console.log('count brands', pQ.count('brands.id'));
         })
         .when(filter?.typeDate, pQ => {
           //type is string or int,float,double

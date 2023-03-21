@@ -22,7 +22,9 @@ function RenderItem({item}: RenderItemProps) {
 
       <View style={styles.itemBrands}>
         {brands.map(pBrand => (
-          <Text key={pBrand.id}>⚫ {pBrand.title}</Text>
+          <Text key={pBrand.id}>
+            ⚫ {pBrand.title} 🟩 {pBrand.count}
+          </Text>
         ))}
       </View>
     </View>

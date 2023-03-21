@@ -110,11 +110,40 @@ export default class QueryBuilder<T> {
   }
 
   where(
-    property: WhereType | keyof T | string,
+    property: keyof T,
     operator?: WhereOperatorType,
     value?: WhereValueType,
-    isOr = false
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  where(
+    property: string,
+    operator?: WhereOperatorType,
+    value?: WhereValueType,
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  where(
+    property: (queryBuilder: QueryBuilder<T>) => void,
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  where(property: WhereType, isOr?: boolean): QueryBuilder<T>;
+  where(
+    property:
+      | WhereType
+      | keyof T
+      | string
+      | ((queryBuilder: QueryBuilder<T>) => void),
+    operator?: WhereOperatorType | boolean,
+    value?: WhereValueType,
+    isOr?: boolean
   ) {
+    if (typeof property === 'function') {
+      this.groupStart();
+
+      property(this);
+
+      return this.groupEnd();
+    }
+
     if ((property as WhereType)?.property) {
       this.where(
         (property as WhereType).property,
@@ -126,7 +155,7 @@ export default class QueryBuilder<T> {
       return this;
     }
 
-    if (operator && CHECK_TYPE.includes(operator)) {
+    if (operator && CHECK_TYPE.includes(operator as WhereOperatorType)) {
       this.groupStart();
     }
 
@@ -139,7 +168,7 @@ export default class QueryBuilder<T> {
       } as WhereType,
     });
 
-    if (operator && CHECK_TYPE.includes(operator)) {
+    if (operator && CHECK_TYPE.includes(operator as WhereOperatorType)) {
       this.whereType(property as string, value as any).groupEnd();
     }
 
@@ -147,11 +176,26 @@ export default class QueryBuilder<T> {
   }
 
   orWhere(
-    property: WhereType | keyof T,
+    property: keyof T,
+    operator?: WhereOperatorType,
+    value?: WhereValueType
+  ): QueryBuilder<T>;
+  orWhere(
+    property: string,
+    operator?: WhereOperatorType,
+    value?: WhereValueType
+  ): QueryBuilder<T>;
+  orWhere(property: WhereType): QueryBuilder<T>;
+  orWhere(
+    property: WhereType | keyof T | string,
     operator?: WhereOperatorType,
     value?: WhereValueType
   ) {
-    return this.where(property, operator, value, true);
+    if ((property as WhereType)?.property) {
+      return this.where(property as WhereType, true);
+    }
+
+    return this.where(property as keyof T, operator, value, true);
   }
 
   whereRaw(query: string, isOr = false) {
@@ -168,11 +212,39 @@ export default class QueryBuilder<T> {
   }
 
   whereBetween(
-    property: WhereType | keyof T,
+    property: keyof T,
     a?: number,
+    b?: number,
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  whereBetween(
+    property: string,
+    a?: number,
+    b?: number,
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  whereBetween(
+    property: Omit<WhereType, 'operator'>,
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  whereBetween(
+    property: Omit<WhereType, 'operator'> | keyof T | string,
+    a?: number | boolean,
     b?: number,
     isOr = false
   ) {
+    if ((property as WhereType)?.property) {
+      this.queryList.push({
+        type: a ? 'orWhereBetween' : 'whereBetween',
+        value: {
+          property: (property as WhereType).property,
+          value: (property as WhereType).value,
+        } as WhereType,
+      });
+
+      return this;
+    }
+
     this.queryList.push({
       type: isOr ? 'orWhereBetween' : 'whereBetween',
       value: {
@@ -184,12 +256,35 @@ export default class QueryBuilder<T> {
     return this;
   }
 
-  orWhereBetween(property: WhereType | keyof T, a?: number, b?: number) {
-    return this.whereBetween(property, a, b, true);
+  orWhereBetween(property: keyof T, a?: number, b?: number): QueryBuilder<T>;
+  orWhereBetween(property: string, a?: number, b?: number): QueryBuilder<T>;
+  orWhereBetween(property: WhereType): QueryBuilder<T>;
+  orWhereBetween(
+    property: WhereType | keyof T | string,
+    a?: number,
+    b?: number
+  ) {
+    if ((property as WhereType)?.property) {
+      return this.whereBetween(property as WhereType, true);
+    }
+
+    return this.whereBetween(property as keyof T, a, b, true);
   }
 
   whereStart(
     property: keyof T,
+    value: string,
+    insensitivity?: boolean,
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  whereStart(
+    property: string,
+    value: string,
+    insensitivity?: boolean,
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  whereStart(
+    property: keyof T | string,
     value: string,
     insensitivity = false,
     isOr = false
@@ -206,16 +301,65 @@ export default class QueryBuilder<T> {
     return this;
   }
 
-  orWhereStart(property: keyof T, value: string, insensitivity = false) {
-    return this.whereStart(property, value, insensitivity, true);
+  orWhereStart(
+    property: keyof T,
+    value: string,
+    insensitivity?: boolean
+  ): QueryBuilder<T>;
+  orWhereStart(
+    property: string,
+    value: string,
+    insensitivity?: boolean
+  ): QueryBuilder<T>;
+  orWhereStart(
+    property: keyof T | string,
+    value: string,
+    insensitivity = false
+  ) {
+    return this.whereStart(property as keyof T, value, insensitivity, true);
   }
 
   whereType(
+    property: keyof T,
+    value:
+      | keyof typeof ValueType
+      | ValueType
+      | (keyof typeof ValueType | ValueType)[]
+      | (string | number)[],
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  whereType(
+    property: string,
+    value:
+      | keyof typeof ValueType
+      | ValueType
+      | (keyof typeof ValueType | ValueType)[]
+      | (string | number)[],
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  whereType(
+    property: keyof T,
+    value: string | number,
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  whereType(
+    property: string,
+    value: string | number,
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  whereType(
     property: keyof T | string,
-    value: ValueType | string | (ValueType | string)[] | number,
+    value:
+      | keyof typeof ValueType
+      | ValueType
+      | string
+      | number
+      | (keyof typeof ValueType | ValueType)[]
+      | (string | number)[],
     isOr = false
   ) {
-    const vType = this.getTypeValue(value);
+    const vType = this.getTypeValue(value as any);
+    console.log(property, vType);
 
     if (vType instanceof Array) {
       this.groupStart();
@@ -238,14 +382,50 @@ export default class QueryBuilder<T> {
   }
 
   orWhereType(
+    property: keyof T,
+    value:
+      | keyof typeof ValueType
+      | ValueType
+      | (keyof typeof ValueType | ValueType)[]
+      | (string | number)[]
+  ): QueryBuilder<T>;
+  orWhereType(
+    property: string,
+    value:
+      | keyof typeof ValueType
+      | ValueType
+      | (keyof typeof ValueType | ValueType)[]
+      | (string | number)[]
+  ): QueryBuilder<T>;
+  orWhereType(property: keyof T, value: string | number): QueryBuilder<T>;
+  orWhereType(property: string, value: string | number): QueryBuilder<T>;
+  orWhereType(
     property: keyof T | string,
-    value: ValueType | string | (ValueType | string)[] | number
+    value:
+      | keyof typeof ValueType
+      | ValueType
+      | string
+      | number
+      | (keyof typeof ValueType | ValueType)[]
+      | (string | number)[]
   ) {
-    return this.whereType(property, value, true);
+    return this.whereType(property as string, value as any, true);
   }
 
   whereEnd(
     property: keyof T,
+    value: string,
+    insensitivity?: boolean,
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  whereEnd(
+    property: string,
+    value: string,
+    insensitivity?: boolean,
+    isOr?: boolean
+  ): QueryBuilder<T>;
+  whereEnd(
+    property: keyof T | string,
     value: string,
     insensitivity = false,
     isOr = false
@@ -262,8 +442,18 @@ export default class QueryBuilder<T> {
     return this;
   }
 
-  orWhereEnd(property: keyof T, value: string, insensitivity = false) {
-    return this.whereEnd(property, value, insensitivity, true);
+  orWhereEnd(
+    property: keyof T,
+    value: string,
+    insensitivity?: boolean
+  ): QueryBuilder<T>;
+  orWhereEnd(
+    property: string,
+    value: string,
+    insensitivity?: boolean
+  ): QueryBuilder<T>;
+  orWhereEnd(property: keyof T | string, value: string, insensitivity = false) {
+    return this.whereEnd(property as string, value, insensitivity, true);
   }
 
   when<P>(
@@ -309,7 +499,9 @@ export default class QueryBuilder<T> {
     return this;
   }
 
-  sort(property: keyof T, sort: 'ASC' | 'DESC' = 'ASC') {
+  sort(property: keyof T, sort: 'ASC' | 'DESC'): QueryBuilder<T>;
+  sort(property: string, sort: 'ASC' | 'DESC'): QueryBuilder<T>;
+  sort(property: keyof T | string, sort: 'ASC' | 'DESC' = 'ASC') {
     this.sortList.push({
       property,
       sort,
@@ -562,6 +754,71 @@ export default class QueryBuilder<T> {
     });
   }
 
+  count(property?: keyof T): number;
+  count(property?: string): number;
+  count(property?: keyof T | string) {
+    if (property) {
+      const { count } = this.flatProperty(property, this.get());
+      return count;
+    }
+
+    return this.get().length;
+  }
+  avg(property: keyof T): number;
+  avg(property: string): number;
+  avg(property: keyof T | string) {
+    const { num, count } = this.flatProperty(property, this.get());
+
+    return num.map((pO) => Number(pO)).reduce((pV, cV) => pV + cV, 0) / count;
+  }
+
+  sum(property: keyof T): number;
+  sum(property: string): number;
+  sum(property: keyof T | string) {
+    const { num } = this.flatProperty(property, this.get());
+    return num.map((pO) => Number(pO)).reduce((pV, cV) => pV + cV, 0);
+  }
+
+  private flatProperty(
+    property: keyof T | string | string[],
+    obj: any
+  ): { num: any[]; count: number } {
+    if (typeof property === 'string') {
+      return this.flatProperty(property.split('.'), obj);
+    }
+    const vKeys = property as string[];
+
+    const key = vKeys.shift();
+
+    if (obj instanceof Array) {
+      if (key === undefined) {
+        const num = obj.flat(5);
+        return { num, count: num.length };
+      }
+
+      return this.flatProperty(
+        vKeys,
+        obj.map((pO) => {
+          if (pO instanceof Array) {
+            return pO.map((pOO) => this.objArrFlat(pOO, key));
+          }
+
+          return this.objArrFlat(pO, key);
+        })
+      );
+    }
+
+    return this.flatProperty(vKeys, obj[key as any]);
+  }
+
+  private objArrFlat(obj: any, key: string) {
+    if (Object.hasOwnProperty.call(obj, key)) {
+      return obj[key as any];
+    }
+
+    return;
+  }
+
   private safeValue(value?: Omit<WhereValueType, '(string|number)[]'> | null) {
     if (value === null || value === undefined) {
       return 'null';
@@ -598,7 +855,7 @@ export default class QueryBuilder<T> {
     value: ValueType | string | (ValueType | string)[] | number
   ) {
     if (value instanceof Array) {
-      return value.map(this.mapToTypeValue);
+      return value.map(this.mapToTypeValue).flat(3);
     }
 
     return this.mapToTypeValue(value);
@@ -609,7 +866,7 @@ export default class QueryBuilder<T> {
       return value;
     }
 
-    if (isFinite(value as any)) {
+    if (typeof value !== 'string' && isFinite(value as any)) {
       return [ValueType.int, ValueType.float, ValueType.double];
     }
 
