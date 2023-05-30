@@ -50,7 +50,7 @@
   "rules": {
     "linebreak-style": [
       "error",
-      "windows"
+      "unix"
     ],
     "prettier/prettier": [
       "error",
