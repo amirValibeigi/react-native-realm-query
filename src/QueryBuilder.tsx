@@ -66,6 +66,7 @@ export type WithType<T, P> = {
   childSchema: string;
   ownerProperty?: keyof T | string;
   childProperty?: string;
+  nameMapTo?: string;
   mapTo?: new (json?: any) => P;
 };
 
@@ -718,9 +719,10 @@ export default class QueryBuilder<T> {
     let vCP = pWith.childProperty ?? schemaToId(this.schema);
     let vOP = pWith.ownerProperty ?? 'id';
     const vMapTitle =
-      pWith.type === 'hasOne' || pWith.type === 'belongTo'
+      pWith.nameMapTo ??
+      (pWith.type === 'hasOne' || pWith.type === 'belongTo'
         ? schemaToTitle(pWith.childSchema)
-        : pWith.childSchema;
+        : pWith.childSchema);
 
     if (pWith.type === 'belongTo' || pWith.type === 'belongToMany') {
       vCP = pWith.childProperty ?? 'id';
@@ -742,7 +744,9 @@ export default class QueryBuilder<T> {
       );
 
       if (ClassC) {
-        vChildObj = vChildObj.map((pVCO: any) => new ClassC(pVCO));
+        vChildObj = vChildObj.map(
+          (pVCO: any) => new ClassC(JSON.parse(JSON.stringify(pVCO)))
+        );
       }
 
       (tmpObj as any)[vMapTitle] =
