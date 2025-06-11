@@ -1,6 +1,6 @@
 {
   "name": "react-native-realm-query",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "react native realm query",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
