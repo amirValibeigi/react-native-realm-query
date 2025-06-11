@@ -1,16 +1,20 @@
+import QueryBuilder, {ValueType} from 'react-native-realm-query';
+import BrandSimpleModel, {
+  BrandSimpleModelType,
+} from '../../models/BrandSimpleModel';
 import Database, {getDatabase} from '../Database';
+
 import CategoryModel from '../../models/CategoryModel';
 import CategorySimpleModel from '../../models/CategorySimpleModel';
-import {CATEGORY_SCHEMA} from '../tables/CategoryTable';
-import QueryBuilder, {ValueType} from 'react-native-realm-query';
 import {BRAND_SCHEMA} from '../tables/BrandTable';
-import BrandSimpleModel from '../../models/BrandSimpleModel';
+import {CATEGORY_SCHEMA} from '../tables/CategoryTable';
 
 export type Filter = Partial<{
   avgCount: boolean;
   betweenId: number[];
   findId: number;
   id: number | number[];
+  brandIds: number[];
   raw: string;
   sort: boolean;
   title: string | string[];
@@ -55,16 +59,17 @@ export const insertOrUpdateCategoryQuery = (
 export const getCategoriesQuery = (filter?: Filter) =>
   new Promise<CategorySimpleModel[]>((resole, reject) => {
     try {
-      const allCategory = new QueryBuilder<CategorySimpleModel>(
-        CATEGORY_SCHEMA,
-      );
+      const allCategory = new QueryBuilder<
+        CategorySimpleModel,
+        'categories',
+        {brands: BrandSimpleModelType}
+      >(CATEGORY_SCHEMA);
 
       allCategory
         .withHasMany(BRAND_SCHEMA, {mapTo: BrandSimpleModel})
         .when(filter?.id, (pQ, id) => {
           //get param from when
           pQ.where('id', '=', id);
-
           //with group
           // pQ.groupStart()
           //   .where('id', '=', id)
@@ -115,6 +120,9 @@ export const getCategoriesQuery = (filter?: Filter) =>
         .when(filter?.count, pQ => {
           console.log('count categories', pQ.count());
           console.log('count brands', pQ.count('brands.id'));
+        })
+        .when(filter?.brandIds, (pQ, brandIds) => {
+          pQ.where('brands.id', '=', brandIds);
         })
         .when(filter?.typeDate, pQ => {
           //type is string or int,float,double

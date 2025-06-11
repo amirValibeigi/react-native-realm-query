@@ -1,9 +1,6 @@
-import QueryBuilder, {
-  ValueType,
-  WhereOperatorType,
-  WhereType,
-  WhereValueType,
-} from './QueryBuilder';
+import QueryBuilder, { ValueType } from './QueryBuilder';
+import type { WhereOperatorType, WhereType, WhereValueType } from './types';
+
 import { schemaToId } from './Utils';
 
 export default class ModelRelationship<T> {
@@ -20,7 +17,7 @@ export default class ModelRelationship<T> {
   ) {
     return new QueryBuilder<P>(schema)
       .where(
-        childProperty as keyof P,
+        childProperty as string,
         '=',
         (this as any)[ownerProperty ?? schemaToId(schema)] ?? -1
       )
@@ -34,7 +31,7 @@ export default class ModelRelationship<T> {
   ) {
     return new QueryBuilder<P>(schema)
       .where(
-        childProperty as keyof P,
+        childProperty as string,
         '=',
         (this as any)[ownerProperty ?? schemaToId(schema)] ?? -1
       )
@@ -48,7 +45,7 @@ export default class ModelRelationship<T> {
   ) {
     return new QueryBuilder<P>(schema)
       .where(
-        (childProperty ?? schemaToId(this.getTableName())) as keyof P,
+        (childProperty ?? schemaToId(this.getTableName())) as string,
         '=',
         (this as any)[ownerProperty] ?? -1
       )
@@ -62,7 +59,7 @@ export default class ModelRelationship<T> {
   ) {
     return new QueryBuilder<P>(schema)
       .where(
-        (childProperty ?? schemaToId(this.getTableName())) as keyof P,
+        (childProperty ?? schemaToId(this.getTableName())) as string,
         '=',
         (this as any)[ownerProperty] ?? -1
       )
@@ -119,7 +116,7 @@ export default class ModelRelationship<T> {
     }
 
     return new QueryBuilder<T>(this.getTable()).where(
-      property as keyof T,
+      property as string,
       operator as any,
       value
     );

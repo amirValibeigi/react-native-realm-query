@@ -1,13 +1,19 @@
-export {
-  default as default,
+export * from './Config';
+export { default as ModelRelationship } from './ModelRelationship';
+export * from './QueryBuilder';
+export type {
+  addPrefixDotToObject,
+  DotNestedKeys,
+  DotPrefix,
   QueryType,
   SortType,
-  ValueType,
   WhereOperatorType,
   WhereType,
   WhereValueType,
   WithOptionType,
   WithType,
-} from './QueryBuilder';
-export { default as ModelRelationship } from './ModelRelationship';
-export * from './Config';
+} from './types';
+
+import QueryBuilder from './QueryBuilder';
+
+export default QueryBuilder;

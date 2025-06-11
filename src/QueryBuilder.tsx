@@ -1,80 +1,17 @@
-import type Realm from 'realm';
-import { getRealm } from './Config';
+import type {
+  QueryType,
+  SortType,
+  WhereOperatorType,
+  WhereType,
+  WhereValueType,
+  WithOptionType,
+  WithType,
+  addPrefixDotToObject,
+} from './types';
 import { schemaToId, schemaToTitle } from './Utils';
 
-export type WhereValueType =
-  | string
-  | number
-  | (string | number)[]
-  | null
-  | undefined;
-export type WhereOperatorType =
-  | '!'
-  | '!='
-  | '<'
-  | '<='
-  | '<=='
-  | '<>'
-  | '='
-  | '=='
-  | '==='
-  | '>'
-  | '>='
-  | '>=='
-  | 'BEGINSWITH'
-  | 'BEGINSWITH[c]'
-  | 'CONTAINS'
-  | 'CONTAINS[c]'
-  | 'ENDSWITH'
-  | 'ENDSWITH[c]'
-  | 'LIKE'
-  | 'LIKE[c]';
-
-export type WhereType = {
-  property: string;
-  operator?: WhereOperatorType;
-  value: WhereValueType;
-};
-
-export type SortType<T> = {
-  property: keyof T | string;
-  sort: 'ASC' | 'DESC';
-};
-
-export type QueryType = {
-  type:
-    | 'and'
-    | 'distinct'
-    | 'groupEnd'
-    | 'groupStart'
-    | 'limit'
-    | 'or'
-    | 'orWhere'
-    | 'orWhereBetween'
-    | 'orWhereRaw'
-    | 'orWhereType'
-    | 'sort'
-    | 'where'
-    | 'whereBetween'
-    | 'whereRaw';
-  value?: WhereType | string;
-};
-
-export type WithType<T, P> = {
-  type: 'belongTo' | 'belongToMany' | 'hasOne' | 'hasMany';
-  ownerSchema: string;
-  childSchema: string;
-  ownerProperty?: keyof T | string;
-  childProperty?: string;
-  nameMapTo?: string;
-  mapTo?: new (json?: any) => P;
-};
-
-export type WithOptionType<T, P> = {
-  ownerProperty?: keyof T | string;
-  childProperty?: keyof P | string;
-  mapTo?: new (json?: any) => P;
-};
+import type Realm from 'realm';
+import { getRealm } from './Config';
 
 export enum ValueType {
   bool = 'bool',
@@ -96,12 +33,16 @@ const REGEX_DATE =
 
 const CHECK_TYPE: WhereOperatorType[] = ['===', '<==', '>=='];
 
-export default class QueryBuilder<T> {
+export default class QueryBuilder<
+  SchemaModel,
+  SchemaName extends string | undefined = undefined,
+  RelationSchemaModels extends object | undefined = undefined
+> {
   private schema: string;
   private realm: Realm;
   private queryList: QueryType[] = [];
-  private withList: WithType<T, unknown>[] = [];
-  private sortList: SortType<T>[] = [];
+  private withList: WithType<SchemaModel, unknown>[] = [];
+  private sortList: SortType<SchemaModel>[] = [];
   private vOffset = -1;
   private vLimit = -1;
 
@@ -111,30 +52,49 @@ export default class QueryBuilder<T> {
   }
 
   where(
-    property: keyof T,
+    property: string,
     operator?: WhereOperatorType,
-    value?: WhereValueType,
+    value?:
+      | keyof addPrefixDotToObject<SchemaModel, SchemaName>
+      | string
+      | WhereValueType,
     isOr?: boolean
-  ): QueryBuilder<T>;
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
   where(
     property: string,
     operator?: WhereOperatorType,
-    value?: WhereValueType,
+    value?:
+      | keyof addPrefixDotToObject<SchemaModel, SchemaName>
+      | string
+      | WhereValueType,
     isOr?: boolean
-  ): QueryBuilder<T>;
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
   where(
-    property: (queryBuilder: QueryBuilder<T>) => void,
+    property: (
+      queryBuilder: QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>
+    ) => void,
     isOr?: boolean
-  ): QueryBuilder<T>;
-  where(property: WhereType, isOr?: boolean): QueryBuilder<T>;
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
+  where(
+    property: WhereType,
+    isOr?: boolean
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
   where(
     property:
       | WhereType
-      | keyof T
       | string
-      | ((queryBuilder: QueryBuilder<T>) => void),
+      | ((
+          queryBuilder: QueryBuilder<
+            SchemaModel,
+            SchemaName,
+            RelationSchemaModels
+          >
+        ) => void),
     operator?: WhereOperatorType | boolean,
-    value?: WhereValueType,
+    value?:
+      | keyof addPrefixDotToObject<SchemaModel, SchemaName>
+      | string
+      | WhereValueType,
     isOr?: boolean
   ) {
     if (typeof property === 'function') {
@@ -177,18 +137,20 @@ export default class QueryBuilder<T> {
   }
 
   orWhere(
-    property: keyof T,
+    property: keyof SchemaModel,
     operator?: WhereOperatorType,
     value?: WhereValueType
-  ): QueryBuilder<T>;
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
   orWhere(
     property: string,
     operator?: WhereOperatorType,
     value?: WhereValueType
-  ): QueryBuilder<T>;
-  orWhere(property: WhereType): QueryBuilder<T>;
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
   orWhere(
-    property: WhereType | keyof T | string,
+    property: WhereType
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
+  orWhere(
+    property: WhereType | keyof SchemaModel | string,
     operator?: WhereOperatorType,
     value?: WhereValueType
   ) {
@@ -196,7 +158,7 @@ export default class QueryBuilder<T> {
       return this.where(property as WhereType, true);
     }
 
-    return this.where(property as keyof T, operator, value, true);
+    return this.where(property as string, operator, value, true);
   }
 
   whereRaw(query: string, isOr = false) {
@@ -213,23 +175,23 @@ export default class QueryBuilder<T> {
   }
 
   whereBetween(
-    property: keyof T,
+    property: keyof SchemaModel,
     a?: number,
     b?: number,
     isOr?: boolean
-  ): QueryBuilder<T>;
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
   whereBetween(
     property: string,
     a?: number,
     b?: number,
     isOr?: boolean
-  ): QueryBuilder<T>;
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
   whereBetween(
     property: Omit<WhereType, 'operator'>,
     isOr?: boolean
-  ): QueryBuilder<T>;
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
   whereBetween(
-    property: Omit<WhereType, 'operator'> | keyof T | string,
+    property: Omit<WhereType, 'operator'> | keyof SchemaModel | string,
     a?: number | boolean,
     b?: number,
     isOr = false
@@ -257,11 +219,21 @@ export default class QueryBuilder<T> {
     return this;
   }
 
-  orWhereBetween(property: keyof T, a?: number, b?: number): QueryBuilder<T>;
-  orWhereBetween(property: string, a?: number, b?: number): QueryBuilder<T>;
-  orWhereBetween(property: WhereType): QueryBuilder<T>;
   orWhereBetween(
-    property: WhereType | keyof T | string,
+    property: keyof SchemaModel,
+    a?: number,
+    b?: number
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
+  orWhereBetween(
+    property: string,
+    a?: number,
+    b?: number
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
+  orWhereBetween(
+    property: WhereType
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
+  orWhereBetween(
+    property: WhereType | keyof SchemaModel | string,
     a?: number,
     b?: number
   ) {
@@ -269,23 +241,23 @@ export default class QueryBuilder<T> {
       return this.whereBetween(property as WhereType, true);
     }
 
-    return this.whereBetween(property as keyof T, a, b, true);
+    return this.whereBetween(property as keyof SchemaModel, a, b, true);
   }
 
   whereStart(
-    property: keyof T,
+    property: keyof SchemaModel,
     value: string,
     insensitivity?: boolean,
     isOr?: boolean
-  ): QueryBuilder<T>;
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
   whereStart(
     property: string,
     value: string,
     insensitivity?: boolean,
     isOr?: boolean
-  ): QueryBuilder<T>;
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
   whereStart(
-    property: keyof T | string,
+    property: keyof SchemaModel | string,
     value: string,
     insensitivity = false,
     isOr = false
@@ -303,32 +275,37 @@ export default class QueryBuilder<T> {
   }
 
   orWhereStart(
-    property: keyof T,
+    property: keyof SchemaModel,
     value: string,
     insensitivity?: boolean
-  ): QueryBuilder<T>;
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
   orWhereStart(
     property: string,
     value: string,
     insensitivity?: boolean
-  ): QueryBuilder<T>;
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
   orWhereStart(
-    property: keyof T | string,
+    property: keyof SchemaModel | string,
     value: string,
     insensitivity = false
   ) {
-    return this.whereStart(property as keyof T, value, insensitivity, true);
+    return this.whereStart(
+      property as keyof SchemaModel,
+      value,
+      insensitivity,
+      true
+    );
   }
 
   whereType(
-    property: keyof T,
+    property: keyof SchemaModel,
     value:
       | keyof typeof ValueType
       | ValueType
       | (keyof typeof ValueType | ValueType)[]
       | (string | number)[],
     isOr?: boolean
-  ): QueryBuilder<T>;
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
   whereType(
     property: string,
     value:
@@ -337,19 +314,19 @@ export default class QueryBuilder<T> {
       | (keyof typeof ValueType | ValueType)[]
       | (string | number)[],
     isOr?: boolean
-  ): QueryBuilder<T>;
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
   whereType(
-    property: keyof T,
+    property: keyof SchemaModel,
     value: string | number,
     isOr?: boolean
-  ): QueryBuilder<T>;
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
   whereType(
     property: string,
     value: string | number,
     isOr?: boolean
-  ): QueryBuilder<T>;
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
   whereType(
-    property: keyof T | string,
+    property: keyof SchemaModel | string,
     value:
       | keyof typeof ValueType
       | ValueType
@@ -383,13 +360,13 @@ export default class QueryBuilder<T> {
   }
 
   orWhereType(
-    property: keyof T,
+    property: keyof SchemaModel,
     value:
       | keyof typeof ValueType
       | ValueType
       | (keyof typeof ValueType | ValueType)[]
       | (string | number)[]
-  ): QueryBuilder<T>;
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
   orWhereType(
     property: string,
     value:
@@ -397,11 +374,17 @@ export default class QueryBuilder<T> {
       | ValueType
       | (keyof typeof ValueType | ValueType)[]
       | (string | number)[]
-  ): QueryBuilder<T>;
-  orWhereType(property: keyof T, value: string | number): QueryBuilder<T>;
-  orWhereType(property: string, value: string | number): QueryBuilder<T>;
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
   orWhereType(
-    property: keyof T | string,
+    property: keyof SchemaModel,
+    value: string | number
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
+  orWhereType(
+    property: string,
+    value: string | number
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
+  orWhereType(
+    property: keyof SchemaModel | string,
     value:
       | keyof typeof ValueType
       | ValueType
@@ -414,19 +397,19 @@ export default class QueryBuilder<T> {
   }
 
   whereEnd(
-    property: keyof T,
+    property: keyof SchemaModel,
     value: string,
     insensitivity?: boolean,
     isOr?: boolean
-  ): QueryBuilder<T>;
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
   whereEnd(
     property: string,
     value: string,
     insensitivity?: boolean,
     isOr?: boolean
-  ): QueryBuilder<T>;
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
   whereEnd(
-    property: keyof T | string,
+    property: keyof SchemaModel | string,
     value: string,
     insensitivity = false,
     isOr = false
@@ -444,22 +427,29 @@ export default class QueryBuilder<T> {
   }
 
   orWhereEnd(
-    property: keyof T,
+    property: keyof SchemaModel,
     value: string,
     insensitivity?: boolean
-  ): QueryBuilder<T>;
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
   orWhereEnd(
     property: string,
     value: string,
     insensitivity?: boolean
-  ): QueryBuilder<T>;
-  orWhereEnd(property: keyof T | string, value: string, insensitivity = false) {
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
+  orWhereEnd(
+    property: keyof SchemaModel | string,
+    value: string,
+    insensitivity = false
+  ) {
     return this.whereEnd(property as string, value, insensitivity, true);
   }
 
   when<P>(
     value: P | undefined | null,
-    callback: (queryBuilder: QueryBuilder<T>, value: P) => void
+    callback: (
+      queryBuilder: QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>,
+      value: P
+    ) => void
   ) {
     if (value !== undefined && value !== null) {
       callback(this, value!);
@@ -500,9 +490,15 @@ export default class QueryBuilder<T> {
     return this;
   }
 
-  sort(property: keyof T, sort: 'ASC' | 'DESC'): QueryBuilder<T>;
-  sort(property: string, sort: 'ASC' | 'DESC'): QueryBuilder<T>;
-  sort(property: keyof T | string, sort: 'ASC' | 'DESC' = 'ASC') {
+  sort(
+    property: keyof SchemaModel,
+    sort: 'ASC' | 'DESC'
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
+  sort(
+    property: string,
+    sort: 'ASC' | 'DESC'
+  ): QueryBuilder<SchemaModel, SchemaName, RelationSchemaModels>;
+  sort(property: keyof SchemaModel | string, sort: 'ASC' | 'DESC' = 'ASC') {
     this.sortList.push({
       property,
       sort,
@@ -514,10 +510,9 @@ export default class QueryBuilder<T> {
   get() {
     const query = this.getQuery();
     let realmResults:
-      | Realm.Results<T & Realm.Object<unknown, never>>
-      | (T & Realm.Object<unknown, never>)[] = this.realm.objects<T>(
-      this.schema
-    );
+      | Realm.Results<SchemaModel & Realm.Object<unknown, never>>
+      | (SchemaModel & Realm.Object<unknown, never>)[] =
+      this.realm.objects<SchemaModel>(this.schema);
 
     if (query.length > 0) {
       realmResults = realmResults.filtered(query);
@@ -533,7 +528,9 @@ export default class QueryBuilder<T> {
       this.withList.forEach((pWith) => {
         realmResults = this.getWith(
           pWith,
-          realmResults as Realm.Results<T & Realm.Object<unknown, never>>
+          realmResults as Realm.Results<
+            SchemaModel & Realm.Object<unknown, never>
+          >
         );
       });
     }
@@ -548,19 +545,19 @@ export default class QueryBuilder<T> {
     return realmResults;
   }
 
-  find(id: number | string, property: keyof T | 'id' = 'id') {
-    const vValue = this.where(property as keyof T, '=', id).get()[0];
+  find(id: number | string, property: string | 'id' = 'id') {
+    const vValue = this.where(property, '=', id).get()[0];
 
     this.queryList.pop();
 
     return vValue;
   }
 
-  findOr<P>(id: number | string, value: P, property: keyof T | 'id' = 'id') {
+  findOr<P>(id: number | string, value: P, property: string | 'id' = 'id') {
     return this.find(id, property) ?? value;
   }
 
-  findOrFail(id: number | string, property: keyof T | 'id' = 'id') {
+  findOrFail(id: number | string, property: string | 'id' = 'id') {
     const vValue = this.find(id, property);
 
     if (vValue === null || vValue === undefined) {
@@ -713,8 +710,8 @@ export default class QueryBuilder<T> {
   }
 
   getWith(
-    pWith: WithType<T, unknown>,
-    baseQuery: Realm.Results<T & Realm.Object<unknown, never>>
+    pWith: WithType<SchemaModel, unknown>,
+    baseQuery: Realm.Results<SchemaModel & Realm.Object<unknown, never>>
   ) {
     let vCP = pWith.childProperty ?? schemaToId(this.schema);
     let vOP = pWith.ownerProperty ?? 'id';
@@ -758,9 +755,9 @@ export default class QueryBuilder<T> {
     });
   }
 
-  count(property?: keyof T): number;
+  count(property?: keyof SchemaModel): number;
   count(property?: string): number;
-  count(property?: keyof T | string) {
+  count(property?: keyof SchemaModel | string) {
     if (property) {
       const { count } = this.flatProperty(property, this.get());
       return count;
@@ -768,23 +765,23 @@ export default class QueryBuilder<T> {
 
     return this.get().length;
   }
-  avg(property: keyof T): number;
+  avg(property: keyof SchemaModel): number;
   avg(property: string): number;
-  avg(property: keyof T | string) {
+  avg(property: keyof SchemaModel | string) {
     const { num, count } = this.flatProperty(property, this.get());
 
     return num.map((pO) => Number(pO)).reduce((pV, cV) => pV + cV, 0) / count;
   }
 
-  sum(property: keyof T): number;
+  sum(property: keyof SchemaModel): number;
   sum(property: string): number;
-  sum(property: keyof T | string) {
+  sum(property: keyof SchemaModel | string) {
     const { num } = this.flatProperty(property, this.get());
     return num.map((pO) => Number(pO)).reduce((pV, cV) => pV + cV, 0);
   }
 
   private flatProperty(
-    property: keyof T | string | string[],
+    property: keyof SchemaModel | string | string[],
     obj: any
   ): { num: any[]; count: number } {
     if (typeof property === 'string') {
@@ -881,7 +878,10 @@ export default class QueryBuilder<T> {
     return ValueType.string;
   }
 
-  withBelongTo<P>(childSchema: string, option?: WithOptionType<T, P>) {
+  withBelongTo<P>(
+    childSchema: string,
+    option?: WithOptionType<SchemaModel, P>
+  ) {
     this.withList.push({
       ...option,
       type: 'belongTo',
@@ -889,12 +889,15 @@ export default class QueryBuilder<T> {
       childSchema,
       childProperty: option?.childProperty ?? 'id',
       ownerProperty: option?.ownerProperty,
-    } as WithType<T, P>);
+    } as WithType<SchemaModel, P>);
 
     return this;
   }
 
-  withBelongToMany<P>(childSchema: string, option?: WithOptionType<T, P>) {
+  withBelongToMany<P>(
+    childSchema: string,
+    option?: WithOptionType<SchemaModel, P>
+  ) {
     this.withList.push({
       ...option,
       type: 'belongToMany',
@@ -902,12 +905,12 @@ export default class QueryBuilder<T> {
       childSchema,
       childProperty: option?.childProperty,
       ownerProperty: option?.ownerProperty ?? 'id',
-    } as WithType<T, P>);
+    } as WithType<SchemaModel, P>);
 
     return this;
   }
 
-  withHasMany<P>(childSchema: string, option?: WithOptionType<T, P>) {
+  withHasMany<P>(childSchema: string, option?: WithOptionType<SchemaModel, P>) {
     this.withList.push({
       ...option,
       type: 'hasMany',
@@ -915,12 +918,12 @@ export default class QueryBuilder<T> {
       childSchema,
       childProperty: option?.childProperty,
       ownerProperty: option?.ownerProperty ?? 'id',
-    } as WithType<T, P>);
+    } as WithType<SchemaModel, P>);
 
     return this;
   }
 
-  withHasOne<P>(childSchema: string, option?: WithOptionType<T, P>) {
+  withHasOne<P>(childSchema: string, option?: WithOptionType<SchemaModel, P>) {
     this.withList.push({
       ...option,
       type: 'hasOne',
@@ -928,7 +931,7 @@ export default class QueryBuilder<T> {
       childSchema,
       childProperty: option?.childProperty,
       ownerProperty: option?.ownerProperty ?? 'id',
-    } as WithType<T, P>);
+    } as WithType<SchemaModel, P>);
 
     return this;
   }
